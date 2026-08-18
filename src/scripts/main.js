@@ -1,7 +1,7 @@
 /**
  * Truth Drops — vanilla interaction layer
  * Scroll reveals, reading ribbon, sticky header shrink, footnote popovers,
- * editor note unfiling, Broken Vase scroll fracture.
+ * editor note unfiling, Broken Amphora scroll fracture.
  * No frameworks, ~5KB gzipped. Respects prefers-reduced-motion.
  */
 
@@ -214,20 +214,18 @@
   }
 
   // ============================================================
-  // 6. Broken Vase — Scroll-driven fracture (article pages)
-  // 12-stage kintsugi fracture progression
+  // 6. Broken Amphora — Scroll-driven fracture (article pages)
+  // 5 stages: hairline → extends+chip → branch → full separation
   // ============================================================
-  function initBrokenVase() {
+  function initBrokenAmphora() {
     if (prefersReduced) {
       document.querySelectorAll('.broken-vessel:not(.is-static)').forEach(vessel => {
         vessel.querySelectorAll('.crack-path').forEach(crack => {
           crack.style.strokeDashoffset = '0';
           crack.classList.add('active');
         });
-        vessel.querySelectorAll('.crack-path[data-stage="12"]').forEach(c => {
-          c.style.transform = 'translateX(-3px)';
-          c.style.transformOrigin = 'center';
-        });
+        // Separate pieces on reduced motion
+        vessel.querySelectorAll('.vessel-piece').forEach(p => p.classList.add('separated'));
       });
       return;
     }
@@ -235,28 +233,22 @@
     const vessels = document.querySelectorAll('.broken-vessel:not(.is-static)');
     if (!vessels.length) return;
 
-    // 12 crack stages in order of appearance — kintsugi progression
+    // 5 crack stages matching the SVG data-stage attributes
     const stages = [
-      { selector: '.crack-path[data-stage="1"]',  threshold: 0.00 },  // Neck crack - immediate
-      { selector: '.crack-path[data-stage="2"]',  threshold: 0.08 },  // Right shoulder branch
-      { selector: '.crack-path[data-stage="3"]',  threshold: 0.08 },  // Left shoulder branch
-      { selector: '.crack-path[data-stage="4"]',  threshold: 0.18 },  // Right shoulder chip
-      { selector: '.crack-path[data-stage="5"]',  threshold: 0.18 },  // Left shoulder chip
-      { selector: '.crack-path[data-stage="6"]',  threshold: 0.30 },  // Right body fracture
-      { selector: '.crack-path[data-stage="7"]',  threshold: 0.30 },  // Left body fracture
-      { selector: '.crack-path[data-stage="8"]',  threshold: 0.48 },  // Lower right fracture
-      { selector: '.crack-path[data-stage="9"]',  threshold: 0.48 },  // Lower left fracture
-      { selector: '.crack-path[data-stage="10"]', threshold: 0.65 },  // Right foot crack
-      { selector: '.crack-path[data-stage="11"]', threshold: 0.65 },  // Left foot crack
-      { selector: '.crack-path[data-stage="12"]', threshold: 0.82 },  // Base center split (final)
+      { selector: '.crack-path[data-stage="1"]', threshold: 0.00 },   // Hairline from rim ~40% neck
+      { selector: '.crack-path[data-stage="2"]', threshold: 0.10 },   // Extends past shoulder
+      { selector: '.crack-path[data-stage="3"]', threshold: 0.18 },   // Chip at rim appears
+      { selector: '.crack-path[data-stage="4"]', threshold: 0.28 },   // Branch toward belly
+      { selector: '.crack-path[data-stage="5"]', threshold: 0.55 },   // Full fracture to base
     ];
 
     let ticking = false;
+    let flashDone = false;
 
     function update() {
       const article = document.querySelector('.drop__body') || document.querySelector('main article');
       if (!article) {
-        // On homepage (static vessel), show first few cracks
+        // On homepage (static vessel), show hairline
         vessels.forEach(vessel => {
           const crack = vessel.querySelector('.crack-path[data-stage="1"]');
           if (crack) {
@@ -286,19 +278,21 @@
             crack.style.strokeDashoffset = crack.getAttribute('stroke-dasharray') || '0';
             crack.classList.remove('active');
           }
-
-          // Add slight separation for final base split when near end
-          if (selector.includes('data-stage="12"') && progress >= 0.88) {
-            crack.style.transform = 'translateX(-3px)';
-            crack.style.transformOrigin = 'center';
-          }
-
-          // Golden flash on final split at sign-off (near end of article)
-          if (selector.includes('data-stage="12"') && progress >= 0.95) {
-            crack.classList.add('final-flash');
-            setTimeout(() => crack.classList.remove('final-flash'), 1500);
-          }
         });
+
+        // Final flash at sign-off (95% scroll)
+        if (!flashDone && progress >= 0.95) {
+          vessel.querySelectorAll('.crack-path').forEach(crack => {
+            crack.classList.add('final-flash');
+          });
+          flashDone = true;
+          setTimeout(() => {
+            vessel.querySelectorAll('.crack-path').forEach(crack => {
+              crack.classList.remove('final-flash');
+            });
+            flashDone = false;
+          }, 600);
+        }
       });
 
       ticking = false;
@@ -317,7 +311,7 @@
   }
 
   // ============================================================
-  // 5. Smooth scroll offset for anchor links
+  // 7. Smooth scroll offset for anchor links
   // ============================================================
   function initAnchorOffset() {
     const header = document.querySelector('.site-header');
@@ -342,7 +336,7 @@
   }
 
   // ============================================================
-  // 7. Homepage Vase Easter Egg — click to fully crack
+  // 8. Homepage Vase Easter Egg — click to fully crack
   // ============================================================
   function initVaseEasterEgg() {
     if (prefersReduced) return;
@@ -356,37 +350,27 @@
       if (cracked) return;
       cracked = true;
 
-      // Animate all 12 cracks sequentially
+      // Animate all cracks sequentially
       const allCracks = homeVase.querySelectorAll('.crack-path');
       allCracks.forEach((crack, i) => {
         setTimeout(() => {
           crack.style.strokeDashoffset = '0';
           crack.classList.add('active');
-        }, i * 180);
+        }, i * 160);
       });
 
-      // Final base split
+      // Final flash
       setTimeout(() => {
-        const mainCrack = homeVase.querySelector('.crack-path[data-stage="12"]');
-        if (mainCrack) {
-          mainCrack.style.transform = 'translateX(-3px)';
-          mainCrack.style.transformOrigin = 'center';
-        }
-      }, 2200);
-
-      // Brief golden flash
-      setTimeout(() => {
-        const mainCrack = homeVase.querySelector('.crack-path[data-stage="12"]');
-        if (mainCrack) {
-          mainCrack.classList.add('final-flash');
-          setTimeout(() => mainCrack.classList.remove('final-flash'), 2000);
-        }
-      }, 2400);
+        homeVase.querySelectorAll('.crack-path').forEach(crack => {
+          crack.classList.add('final-flash');
+          setTimeout(() => crack.classList.remove('final-flash'), 1200);
+        });
+      }, allCracks.length * 160 + 200);
     });
   }
 
   // ============================================================
-  // 8. Custom cursor for article body (text caret feel)
+  // 9. Custom cursor for article body (text caret feel)
   // ============================================================
   function initCustomCursor() {
     if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -411,7 +395,7 @@
     initHeaderShrink();
     initFootnotes();
     initAnchorOffset();
-    initBrokenVase();
+    initBrokenAmphora();
     initVaseEasterEgg();
     initCustomCursor();
   }

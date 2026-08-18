@@ -1,7 +1,8 @@
 ---
 /**
- * BrokenVessel — elegant geometric porcelain vase
- * Classical symmetry, golden ratio proportions, refined kintsugi fractures
+ * BrokenVessel — Classical amphora, pure ink outline, hand-drawn feel
+ * 3-stage kintsugi fracture: hairline → branching → full separation
+ * Pure outline, no fill, hand-drawn asymmetry, amphora silhouette
  */
 interface Props {
   static?: boolean;
@@ -10,62 +11,121 @@ interface Props {
 }
 const { static: isStatic = false, size = 220, class: klass = '' } = Astro.props;
 const h = size;
-const w = size * 0.44; // Golden ratio-ish proportion
+const w = size * 0.46; // 1:1.4 ratio (width:height)
 
-// Precise geometric construction
+// Classical amphora proportions
+const neckTop = h * 0.02;
+const neckBottom = h * 0.11;      // neck = ~1/4 height (h * 0.09)
+const shoulderTop = h * 0.11;
+const shoulderBottom = h * 0.19;
+const bellyMax = h * 0.42;
+const bellyBottom = h * 0.68;
+const footTop = h * 0.68;
+const footBottom = h * 0.74;
+const baseBottom = h * 0.98;
+
 const cx = w * 0.5;
-const neckTop = h * 0.025;
-const neckBottom = h * 0.1;
-const shoulderTop = h * 0.1;
-const shoulderBottom = h * 0.16;
-const bodyMax = h * 0.36;
-const bodyBottom = h * 0.64;
-const footTop = h * 0.64;
-const footBottom = h * 0.72;
-const baseBottom = h * 0.975;
+const neckR = w * 0.14;           // narrow neck
+const lipR = w * 0.18;            // slight flare at lip
+const shoulderR = w * 0.44;
+const bellyR = w * 0.48;          // max width
+const footR = w * 0.22;
+const baseR = w * 0.13;
 
-const neckR = w * 0.16;
-const shoulderR = w * 0.38;
-const bodyR = w * 0.48;
-const footR = w * 0.26;
-const baseR = w * 0.14;
+// Subtle hand-drawn asymmetry (±1.5%)
+const asym = (val: number, side: 'L' | 'R') => {
+  const factor = side === 'L' ? 0.987 : 1.013; // 1.3% asymmetry
+  return val * factor;
+};
 
-// Geometrically perfect paths using quadratic curves with symmetric control points
-const vaseOutline = `
-  M ${cx} ${neckTop}
+// Build path with subtle asymmetry
+const buildOutline = () => {
+  const L = (y: number, r: number) => cx - asym(r, 'L');
+  const R = (y: number, r: number) => cx + asym(r, 'R');
+  const C = (y: number) => cx;
+
+  // Build the outline as a single continuous path
+  // Start at left lip, go around clockwise
+  return `
+    M ${L(neckTop, lipR)} ${neckTop}
+    Q ${cx} ${neckTop - 2} ${R(neckTop, lipR)} ${neckTop}
+    L ${R(neckBottom, neckR)} ${neckBottom}
+    Q ${R(shoulderTop, shoulderR)} ${shoulderTop} ${R(shoulderBottom, shoulderR)} ${shoulderBottom}
+    Q ${R(bellyMax, bellyR)} ${bellyMax} ${R(h * 0.5, bellyR)} ${h * 0.5}
+    Q ${R(bellyBottom, bellyR)} ${bellyBottom} ${R(footTop, footR)} ${footTop}
+    Q ${R(baseBottom, baseR)} ${footBottom} ${R(baseBottom, baseR)} ${baseBottom}
+    L ${L(baseBottom, baseR)} ${baseBottom}
+    Q ${L(footBottom, baseR)} ${footBottom} ${L(footTop, footR)} ${footTop}
+    L ${L(bellyBottom, bellyR)} ${bellyBottom}
+    Q ${L(h * 0.5, bellyR)} ${h * 0.5} ${L(bellyMax, bellyR)} ${bellyMax}
+    Q ${L(shoulderBottom, shoulderR)} ${shoulderBottom} ${L(shoulderTop, shoulderR)} ${shoulderTop}
+    L ${L(neckBottom, neckR)} ${neckBottom}
+    Q ${cx} ${neckTop - 2} ${L(neckTop, lipR)} ${neckTop}
+    Z
+  `.trim().replace(/\s+/g, ' ');
+};
+
+const vaseOutline = buildOutline();
+
+// Crack paths - separate layers for animation
+// Stage 1: Hairline from rim ~40% down neck (jagged, 3-4 segments)
+const crack1 = `
+  M ${cx} ${neckTop + 1}
+  L ${cx + 0.5} ${neckTop + h * 0.035}
+  L ${cx - 0.8} ${neckTop + h * 0.055}
+  L ${cx + 0.3} ${neckTop + h * 0.075}
+  L ${cx - 0.4} ${neckTop + h * 0.095}
+`;
+
+// Stage 2: Extends past shoulder, branch toward belly, chip at rim
+const crack2 = `
+  M ${cx - 0.2} ${neckTop + h * 0.09}
+  L ${cx - 0.8} ${shoulderTop + 2}
+  L ${cx - shoulderR * 0.7} ${shoulderBottom - 2}
+  L ${cx - shoulderR * 0.9} ${shoulderBottom + 2}
+`;
+
+// Stage 2b: Chip at rim (small triangle lifting)
+const crackChip = `
+  M ${cx - lipR * 0.6} ${neckTop + 1}
+  L ${cx - lipR * 0.9} ${neckTop - 1}
+  L ${cx - lipR * 0.3} ${neckTop + 0.5}
+  Z
+`;
+
+// Stage 2c: Branch toward belly
+const crackBranch = `
+  M ${cx - 0.5} ${shoulderBottom - 1}
+  Q ${cx - shoulderR * 0.3} ${h * 0.28} ${cx - shoulderR * 0.15} ${h * 0.38}
+`;
+
+// Stage 3: Full fracture to base - splits into discrete pieces
+// These are separate closed paths that will separate with gaps/rotation
+const piece1 = `
+  M ${cx - lipR} ${neckTop}
+  Q ${cx} ${neckTop - 2} ${cx + lipR} ${neckTop}
   L ${cx + neckR} ${neckBottom}
   Q ${cx + shoulderR} ${shoulderTop} ${cx + shoulderR} ${shoulderBottom}
-  Q ${cx + bodyR} ${bodyMax} ${cx + bodyR} ${h * 0.5}
-  Q ${cx + bodyR} ${bodyBottom} ${cx + footR} ${footTop}
-  Q ${cx + baseR} ${footBottom} ${cx + baseR} ${baseBottom}
+  Q ${cx + bellyR} ${bellyMax} ${cx + bellyR} ${h * 0.5}
+  L ${cx + bellyR} ${bellyBottom}
+  Q ${cx + footR} ${footBottom} ${cx + baseR} ${baseBottom}
   L ${cx - baseR} ${baseBottom}
-  Q ${cx - baseR} ${footBottom} ${cx - footR} ${footTop}
-  L ${cx - bodyR} ${bodyBottom}
-  Q ${cx - bodyR} ${h * 0.5} ${cx - bodyR} ${bodyMax}
+  Q ${cx - footR} ${footBottom} ${cx - footR} ${footTop}
+  L ${cx - bellyR} ${bellyBottom}
+  Q ${cx - bellyR} ${h * 0.5} ${cx - bellyR} ${bellyMax}
   Q ${cx - shoulderR} ${shoulderBottom} ${cx - shoulderR} ${shoulderTop}
   L ${cx - neckR} ${neckBottom}
+  Q ${cx} ${neckTop - 2} ${cx - lipR} ${neckTop}
   Z
-`.trim().replace(/\s+/g, ' ');
+`;
 
-// Symmetric crack system - 10 cracks in mirrored pairs + center
-const neckCrack = `M ${cx} ${neckBottom} Q ${cx} ${h * 0.07} ${cx} ${h * 0.18}`;
-
-const shoulderCrackR = `M ${cx + shoulderR * 0.3} ${shoulderBottom} Q ${cx + shoulderR * 0.7} ${h * 0.22} ${cx + shoulderR} ${h * 0.28}`;
-const shoulderCrackL = `M ${cx - shoulderR * 0.3} ${shoulderBottom} Q ${cx - shoulderR * 0.7} ${h * 0.22} ${cx - shoulderR} ${h * 0.28}`;
-
-const shoulderChipR = `M ${cx + shoulderR * 0.9} ${shoulderBottom} Q ${cx + shoulderR * 0.6} ${h * 0.2} ${cx + shoulderR * 0.9} ${h * 0.25}`;
-const shoulderChipL = `M ${cx - shoulderR * 0.9} ${shoulderBottom} Q ${cx - shoulderR * 0.6} ${h * 0.2} ${cx - shoulderR * 0.9} ${h * 0.25}`;
-
-const bodyCrackR = `M ${cx + bodyR * 0.4} ${h * 0.38} Q ${cx + bodyR * 0.8} ${h * 0.46} ${cx + bodyR * 0.6} ${h * 0.56}`;
-const bodyCrackL = `M ${cx - bodyR * 0.4} ${h * 0.38} Q ${cx - bodyR * 0.8} ${h * 0.46} ${cx - bodyR * 0.6} ${h * 0.56}`;
-
-const lowerCrackR = `M ${cx + footR * 0.7} ${footTop} Q ${cx + bodyR * 0.3} ${h * 0.58} ${cx + footR * 0.3} ${h * 0.68}`;
-const lowerCrackL = `M ${cx - footR * 0.7} ${footTop} Q ${cx - bodyR * 0.3} ${h * 0.58} ${cx - footR * 0.3} ${h * 0.68}`;
-
-const footCrackR = `M ${cx + footR * 0.8} ${footTop} Q ${cx + footR * 0.5} ${h * 0.7} ${cx + footR * 0.8} ${h * 0.78}`;
-const footCrackL = `M ${cx - footR * 0.8} ${footTop} Q ${cx - footR * 0.5} ${h * 0.7} ${cx - footR * 0.8} ${h * 0.78}`;
-
-const baseSplit = `M ${cx} ${h * 0.85} Q ${cx} ${h * 0.91} ${cx} ${baseBottom}`;
+const piece2 = `
+  M ${cx - lipR} ${neckTop}
+  Q ${cx} ${neckTop - 2} ${cx + lipR} ${neckTop}
+  L ${cx + lipR * 0.5} ${neckTop + 2}
+  L ${cx - lipR * 0.5} ${neckTop + 2}
+  Z
+`;
 ---
 <svg
   class:list={['broken-vessel', klass, { 'is-static': isStatic }]}
@@ -75,117 +135,113 @@ const baseSplit = `M ${cx} ${h * 0.85} Q ${cx} ${h * 0.91} ${cx} ${baseBottom}`;
   aria-hidden="true"
   preserveAspectRatio="xMidYMid meet"
   role="img"
-  aria-label="Elegant porcelain vase with kintsugi gold repair — symmetry and fracture"
+  aria-label="Classical amphora with kintsugi fracture — hand-drawn ink etching"
 >
   <defs>
     <style>
-      /* Vase outline — refined porcelain line */
-      .vase-outline {
-        stroke: var(--vase-stroke, #C4B89A);
-        stroke-width: 1.5;
+      /* Vessel outline — single ink line, hand-drawn */
+      .vessel-outline {
+        stroke: var(--vase-stroke, var(--text-secondary, #9C9A94));
+        stroke-width: 1.6;
         fill: none;
         stroke-linecap: round;
         stroke-linejoin: round;
-        opacity: 0.95;
-        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
+        opacity: 0.92;
+        filter: drop-shadow(0 0.5px 1px rgba(0,0,0,0.25));
         transition: stroke 0.5s var(--ease-out-expo), opacity 0.5s var(--ease-out-expo);
       }
 
-      /* Subtle porcelain body */
-      .vase-body {
-        fill: var(--vase-fill, #1A1916);
-        opacity: 0.55;
-        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.35));
-      }
-
-      /* Crack paths — pure kintsugi gold */
+      /* Crack paths — kintsugi gold/accent, separate layer */
       .crack-path {
-        stroke: var(--vase-crack, #D4B852);
-        stroke-width: 1.2;
+        stroke: var(--vase-crack, var(--accent, #C0392B));
+        stroke-width: 1.1;
         fill: none;
         stroke-linecap: round;
         stroke-linejoin: round;
         opacity: 0;
+        stroke-dasharray: 2, 2;  /* slight irregularity for hand-drawn feel */
         transition: stroke 0.5s var(--ease-out-expo),
-                    stroke-dashoffset 1.1s cubic-bezier(0.22, 0.61, 0.36, 1),
-                    opacity 0.35s var(--ease-out-expo),
-                    transform 0.6s var(--ease-out-expo);
+                    stroke-dashoffset 1.0s cubic-bezier(0.22, 0.61, 0.36, 1),
+                    opacity 0.3s var(--ease-out-expo),
+                    transform 0.6s var(--ease-out-expo),
+                    stroke-opacity 0.3s var(--ease-out-expo);
         transform-origin: center;
-        filter: drop-shadow(0 0 1px var(--vase-crack));
+        stroke-opacity: 0.6;
       }
 
-      /* 10 cracks in symmetric order */
-      .crack-path[data-stage="1"]  { stroke-dasharray: 42;  stroke-dashoffset: 42;  }  /* Neck center */
-      .crack-path[data-stage="2"]  { stroke-dasharray: 48;  stroke-dashoffset: 48;  }  /* Right shoulder */
-      .crack-path[data-stage="3"]  { stroke-dasharray: 48;  stroke-dashoffset: 48;  }  /* Left shoulder */
-      .crack-path[data-stage="4"]  { stroke-dasharray: 32;  stroke-dashoffset: 32;  }  /* Right shoulder chip */
-      .crack-path[data-stage="5"]  { stroke-dasharray: 32;  stroke-dashoffset: 32;  }  /* Left shoulder chip */
-      .crack-path[data-stage="6"]  { stroke-dasharray: 52;  stroke-dashoffset: 52;  }  /* Right body */
-      .crack-path[data-stage="7"]  { stroke-dasharray: 52;  stroke-dashoffset: 52;  }  /* Left body */
-      .crack-path[data-stage="8"]  { stroke-dasharray: 48;  stroke-dashoffset: 48;  }  /* Right lower */
-      .crack-path[data-stage="9"]  { stroke-dasharray: 48;  stroke-dashoffset: 48;  }  /* Left lower */
-      .crack-path[data-stage="10"] { stroke-dasharray: 50;  stroke-dashoffset: 50;  }  /* Base center split */
+      .crack-path[data-stage="1"]  { stroke-dasharray: 38;  stroke-dashoffset: 38;  }  /* Hairline neck */
+      .crack-path[data-stage="2"]  { stroke-dasharray: 42;  stroke-dashoffset: 42;  }  /* Extends + branch */
+      .crack-path[data-stage="3"]  { stroke-dasharray: 24;  stroke-dashoffset: 24;  }  /* Rim chip */
+      .crack-path[data-stage="4"]  { stroke-dasharray: 36;  stroke-dashoffset: 36;  }  /* Branch */
+      .crack-path[data-stage="5"]  { stroke-dasharray: 95;  stroke-dashoffset: 95;  }  /* Full fracture path */
 
-      .crack-path.active { stroke-dashoffset: 0; opacity: 1; }
+      .crack-path.active { stroke-dashoffset: 0; opacity: 1; stroke-opacity: 1; }
       .crack-path.final-flash {
-        stroke: var(--vase-flash, #F0D878);
-        opacity: 1;
+        stroke: var(--vase-flash, var(--accent));
+        stroke-opacity: 1;
         filter: drop-shadow(0 0 3px var(--vase-flash)) drop-shadow(0 0 6px var(--vase-flash));
       }
 
-      /* Static state */
+      /* Static state (homepage/header) */
       .broken-vessel.is-static .crack-path {
         stroke-dashoffset: 0;
-        opacity: 0.45;
+        opacity: 0.55;
+        stroke-opacity: 0.6;
       }
       .broken-vessel.is-static .crack-path[data-stage="1"] { opacity: 1; }
-      .broken-vessel.is-static .crack-path[data-stage="2"] { opacity: 0.6; }
-      .broken-vessel.is-static .crack-path[data-stage="3"] { opacity: 0.6; }
-      .broken-vessel.is-static .crack-path[data-stage="10"] { opacity: 0.55; transform: translateX(-2px); }
+      .broken-vessel.is-static .crack-path[data-stage="5"] { opacity: 0.4; transform: translateX(-3px) rotate(-1deg); }
 
       @media (prefers-reduced-motion: reduce) {
-        .broken-vessel:not(.is-static) .crack-path { stroke-dashoffset: 0; opacity: 1; }
-        .broken-vessel:not(.is-static) .crack-path[data-stage="10"] { transform: translateX(-2px); }
+        .broken-vessel:not(.is-static) .crack-path { stroke-dashoffset: 0; opacity: 1; stroke-opacity: 1; }
+        .broken-vessel:not(.is-static) .crack-path[data-stage="5"] { transform: translateX(-3px) rotate(-1deg); }
       }
 
-      /* Subtle shimmer */
-      @keyframes vase-shimmer {
-        0%, 100% { opacity: 0.95; }
+      /* Subtle ambient shimmer on outline */
+      @keyframes vessel-shimmer {
+        0%, 100% { opacity: 0.92; }
         50% { opacity: 1; }
       }
-      .broken-vessel:not(.is-static) .vase-outline { animation: vase-shimmer 12s ease-in-out infinite; }
-      .vase-glow { animation: glow-pulse 8s ease-in-out infinite; }
-      @keyframes glow-pulse { 0%, 100% { opacity: 0.02; } 50% { opacity: 0.04; } }
+      .broken-vessel:not(.is-static) .vessel-outline { animation: vessel-shimmer 14s ease-in-out infinite; }
+      .vase-glow { animation: glow-pulse 10s ease-in-out infinite; }
+      @keyframes glow-pulse { 0%, 100% { opacity: 0.015; } 50% { opacity: 0.035; } }
+
+      /* Piece separation for stage 3 */
+      .vessel-piece {
+        transition: transform 0.7s var(--ease-out-expo), opacity 0.5s var(--ease-out-expo);
+        transform-origin: center center;
+      }
+      .vessel-piece.separated {
+        transform: translateX(var(--tx, 0)) translateY(var(--ty, 0)) rotate(var(--rot, 0));
+      }
     </style>
 
     <style>
       :host {
-        --vase-stroke: #C4B89A;
-        --vase-fill: #1A1916;
-        --vase-crack: #D4B852;
-        --vase-flash: #F0D878;
+        --vase-stroke: var(--text-secondary, #9C9A94);
+        --vase-crack: var(--accent, #C0392B);
+        --vase-flash: var(--accent, #C0392B);
       }
     </style>
   </defs>
 
-  <!-- Subtle glow -->
-  <ellipse class="vase-glow" cx="50%" cy="52%" rx="42%" ry="40%" fill="var(--vase-crack)" fill-opacity="0.02" filter="blur(12px)" />
+  <!-- Subtle glow behind -->
+  <ellipse class="vase-glow" cx="50%" cy="52%" rx="40%" ry="38%" fill="var(--vase-crack)" fill-opacity="0.018" filter="blur(14px)" />
 
-  <!-- Porcelain body -->
-  <path class="vase-body" d={vaseOutline} />
+  <!-- Vessel outline — single continuous hand-drawn line -->
+  <path class="vessel-outline" d={vaseOutline} />
 
-  <!-- Outline -->
-  <path class="vase-outline" d={vaseOutline} />
+  <!-- Stage 1: Hairline crack from rim ~40% down neck (jagged, 3-4 segments) -->
+  <path class="crack-path" data-stage="1" d={crack1} />
 
-  <!-- Cracks in symmetric pairs -->
-  <path class="crack-path" data-stage="1" d={neckCrack} />                       <!-- 1: Neck center -->
-  <path class="crack-path" data-stage="2" d={shoulderCrackR} />                   <!-- 2: Right shoulder -->
-  <path class="crack-path" data-stage="3" d={shoulderCrackL} />                   <!-- 3: Left shoulder -->
-  <path class="crack-path" data-stage="4" d={shoulderChipR} />                    <!-- 4: Right shoulder chip -->
-  <path class="crack-path" data-stage="5" d={shoulderChipL} />                    <!-- 5: Left shoulder chip -->
-  <path class="crack-path" data-stage="6" d={bodyCrackR} />                       <!-- 6: Right body -->
-  <path class="crack-path" data-stage="7" d={bodyCrackL} />                       <!-- 7: Left body -->
-  <path class="crack-path" data-stage="8" d={lowerCrackR} />                      <!-- 8: Right lower -->
-  <path class="crack-path" data-stage="9" d={lowerCrackL} />                      <!-- 9: Left lower -->
-  <path class="crack-path" data-stage="10" d={baseSplit} />                       <!-- 10: Base center -->
+  <!-- Stage 2: Extends past shoulder -->
+  <path class="crack-path" data-stage="2" d={crack2} />
+
+  <!-- Stage 2b: Chip at rim (tiny triangle lifting) -->
+  <path class="crack-path" data-stage="3" d={crackChip} />
+
+  <!-- Stage 2c: Branch toward belly -->
+  <path class="crack-path" data-stage="4" d={crackBranch} />
+
+  <!-- Stage 3: Full fracture path (for animation) - the line that draws down to base -->
+  <path class="crack-path" data-stage="5" d={crack1 + crack2 + crackBranch} />
 </svg>

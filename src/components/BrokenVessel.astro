@@ -11,6 +11,39 @@ interface Props {
 const { static: isStatic = false, size = 200, class: klass = '' } = Astro.props;
 const vesselHeight = size;
 const vesselWidth = size * 0.6;
+const halfW = vesselWidth * 0.5;
+const neckY = vesselHeight * 0.045;
+const shoulderY = vesselHeight * 0.09;
+const upperY = vesselHeight * 0.16;
+const midY = vesselHeight * 0.24;
+const lowerY = vesselHeight * 0.33;
+const chipY = vesselHeight * 0.38;
+const rimY = vesselHeight * 0.44;
+const baseY = vesselHeight * 0.78;
+const bottomY = vesselHeight * 0.94;
+const rightX = vesselWidth * 0.88;
+const rightInnerX = vesselWidth * 0.82;
+const leftX = vesselWidth * 0.12;
+const leftInnerX = vesselWidth * 0.34;
+const centerX = vesselWidth * 0.5;
+const rightCurveX = vesselWidth * 0.9;
+const leftCurveX = vesselWidth * 0.1;
+const upperCurveX = vesselWidth * 0.75;
+const lowerCurveX = vesselWidth * 0.25;
+const fractureStartX = vesselWidth * 0.28;
+const fractureMidX = vesselWidth * 0.38;
+const fractureCenterX = vesselWidth * 0.5;
+const fractureUpperX = vesselWidth * 0.62;
+const fractureTopX = vesselWidth * 0.52;
+
+// Pre-compute all path data as strings
+const vesselOutline = `M ${halfW} ${neckY} Q ${vesselWidth * 0.88} ${shoulderY} ${vesselWidth * 0.9} ${vesselHeight * 0.33} Q ${vesselWidth * 0.92} ${vesselHeight * 0.58} ${vesselWidth * 0.72} ${vesselHeight * 0.78} Q ${halfW} ${bottomY} ${vesselWidth * 0.28} ${vesselHeight * 0.78} Q ${vesselWidth * 0.08} ${vesselHeight * 0.58} ${vesselWidth * 0.1} ${vesselHeight * 0.33} Q ${vesselWidth * 0.12} ${shoulderY} ${halfW} ${neckY} Z`;
+
+const crack1 = `M ${halfW} ${vesselHeight * 0.09} Q ${halfW + vesselWidth * 0.03} ${vesselHeight * 0.17} ${halfW - vesselWidth * 0.03} ${vesselHeight * 0.3}`;
+const crack2 = `M ${halfW} ${upperY} Q ${halfW + vesselWidth * 0.1} ${vesselHeight * 0.22} ${halfW + vesselWidth * 0.16} ${midY}`;
+const crack3 = `M ${halfW} ${upperY} Q ${halfW - vesselWidth * 0.1} ${vesselHeight * 0.22} ${halfW - vesselWidth * 0.16} ${midY}`;
+const crack4 = `M ${vesselWidth * 0.88} ${lowerY} Q ${vesselWidth * 0.82} ${chipY} ${vesselWidth * 0.88} ${rimY}`;
+const crack5 = `M ${fractureStartX} ${baseY} Q ${fractureMidX} ${vesselHeight * 0.6} ${fractureCenterX} ${vesselHeight * 0.35} Q ${fractureUpperX} ${vesselHeight * 0.18} ${fractureTopX} ${vesselHeight * 0.09}`;
 ---
 <svg
   class:list={['broken-vessel', klass, { 'is-static': isStatic }]}
@@ -19,7 +52,6 @@ const vesselWidth = size * 0.6;
   height={vesselHeight}
   aria-hidden="true"
   preserveAspectRatio="xMidYMid meet"
-  style="--vessel-h: #{vesselHeight}px; --vessel-w: #{vesselWidth}px;"
 >
   <defs>
     <style>
@@ -64,40 +96,20 @@ const vesselWidth = size * 0.6;
   </defs>
 
   <!-- Vessel outline — visible, elegant etching -->
-  <path class="vessel-outline"
-    d="
-      M #{vesselWidth * 0.5} #{vesselHeight * 0.045}
-      Q #{vesselWidth * 0.88} #{vesselHeight * 0.09} #{vesselWidth * 0.9} #{vesselHeight * 0.33}
-      Q #{vesselWidth * 0.92} #{vesselHeight * 0.58} #{vesselWidth * 0.72} #{vesselHeight * 0.78}
-      Q #{vesselWidth * 0.5} #{vesselHeight * 0.94} #{vesselWidth * 0.28} #{vesselHeight * 0.78}
-      Q #{vesselWidth * 0.08} #{vesselHeight * 0.58} #{vesselWidth * 0.1} #{vesselHeight * 0.33}
-      Q #{vesselWidth * 0.12} #{vesselHeight * 0.09} #{vesselWidth * 0.5} #{vesselHeight * 0.045}
-      Z
-    " />
+  <path class="vessel-outline" d={vesselOutline} />
 
   <!-- Stage 1: Hairline crack at neck -->
-  <path class="crack-path" data-stage="1"
-    d="M #{vesselWidth * 0.5} #{vesselHeight * 0.09}
-       Q #{vesselWidth * 0.53} #{vesselHeight * 0.17} #{vesselWidth * 0.47} #{vesselHeight * 0.3}" />
+  <path class="crack-path" data-stage="1" d={crack1} />
 
   <!-- Stage 2: Right branch -->
-  <path class="crack-path" data-stage="2"
-    d="M #{vesselWidth * 0.5} #{vesselHeight * 0.16}
-       Q #{vesselWidth * 0.6} #{vesselHeight * 0.24} #{vesselWidth * 0.66} #{vesselHeight * 0.35}" />
+  <path class="crack-path" data-stage="2" d={crack2} />
 
   <!-- Stage 3: Left branch -->
-  <path class="crack-path" data-stage="3"
-    d="M #{vesselWidth * 0.5} #{vesselHeight * 0.16}
-       Q #{vesselWidth * 0.4} #{vesselHeight * 0.24} #{vesselWidth * 0.34} #{vesselHeight * 0.35}" />
+  <path class="crack-path" data-stage="3" d={crack3} />
 
   <!-- Stage 4: Chip at right rim -->
-  <path class="crack-path" data-stage="4"
-    d="M #{vesselWidth * 0.87} #{vesselHeight * 0.33}
-       Q #{vesselWidth * 0.81} #{vesselHeight * 0.38} #{vesselWidth * 0.87} #{vesselHeight * 0.44}" />
+  <path class="crack-path" data-stage="4" d={crack4} />
 
   <!-- Stage 5: Main fracture line -->
-  <path class="crack-path" data-stage="5"
-    d="M #{vesselWidth * 0.28} #{vesselHeight * 0.78}
-       Q #{vesselWidth * 0.38} #{vesselHeight * 0.6} #{vesselWidth * 0.5} #{vesselHeight * 0.35}
-       Q #{vesselWidth * 0.62} #{vesselHeight * 0.18} #{vesselWidth * 0.52} #{vesselHeight * 0.09}" />
+  <path class="crack-path" data-stage="5" d={crack5} />
 </svg>

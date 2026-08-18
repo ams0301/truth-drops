@@ -1,30 +1,16 @@
 ---
 /**
  * BrokenVessel — single-stroke etching-style vessel with scroll-driven crack animation
- * Elegant, restrained line art matching the editorial aesthetic
- *
- * Props:
- *   - static?: boolean — if true, show fully cracked (final) state
- *   - size?: number — height in pixels (default 180)
- *   - class?: string — additional CSS classes
+ * Visible, elegant, matches the editorial aesthetic
  */
 interface Props {
   static?: boolean;
   size?: number;
   class?: string;
 }
-const { static: isStatic = false, size = 180, class: klass = '' } = Astro.props;
+const { static: isStatic = false, size = 200, class: klass = '' } = Astro.props;
 const vesselHeight = size;
-const vesselWidth = size * 0.65; // slightly narrower, more elegant proportion
-
-// Crack path lengths for stroke-dasharray animation
-const CRACK_LENGTHS = {
-  hairline: 52,
-  branchRight: 36,
-  branchLeft: 34,
-  chip: 24,
-  splitMain: 62,
-};
+const vesselWidth = size * 0.6;
 ---
 <svg
   class:list={['broken-vessel', klass, { 'is-static': isStatic }]}
@@ -38,79 +24,80 @@ const CRACK_LENGTHS = {
   <defs>
     <style>
       .vessel-outline {
-        stroke: var(--text-muted);
-        stroke-width: 1.2;
+        stroke: var(--text-secondary);
+        stroke-width: 1.5;
         fill: none;
         stroke-linecap: round;
         stroke-linejoin: round;
-        opacity: 0.5;
+        opacity: 0.7;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.3));
         transition: stroke 0.4s var(--ease-out-expo), opacity 0.4s var(--ease-out-expo);
       }
       .crack-path {
-        stroke: var(--text-secondary);
-        stroke-width: 1.1;
+        stroke: var(--accent);
+        stroke-width: 1.3;
         fill: none;
         stroke-linecap: round;
         stroke-linejoin: round;
+        opacity: 0;
         transition: stroke 0.4s var(--ease-out-expo),
-                    stroke-dashoffset 0.8s var(--ease-out-expo),
+                    stroke-dashoffset 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94),
                     opacity 0.3s var(--ease-out-expo),
                     transform 0.6s var(--ease-out-expo);
         transform-origin: center;
       }
-      /* Stages in order of appearance */
-      .crack-path[data-stage="1"] { --len: 52; stroke-dasharray: 52; stroke-dashoffset: 52; }
-      .crack-path[data-stage="2"] { --len: 36; stroke-dasharray: 36; stroke-dashoffset: 36; }
-      .crack-path[data-stage="3"] { --len: 34; stroke-dasharray: 34; stroke-dashoffset: 34; }
-      .crack-path[data-stage="4"] { --len: 24; stroke-dasharray: 24; stroke-dashoffset: 24; }
-      .crack-path[data-stage="5"] { --len: 62; stroke-dasharray: 62; stroke-dashoffset: 62; }
-      .crack-path.active { stroke-dashoffset: 0; }
-      .crack-path.final-flash { stroke: var(--accent); opacity: 1; }
-      .broken-vessel.is-static .crack-path { stroke-dashoffset: 0; }
-      .broken-vessel.is-static .crack-path[data-stage="5"] { transform: translateX(-3px); }
-      /* Reduced motion: show final state */
+      .crack-path[data-stage="1"] { stroke-dasharray: 55; stroke-dashoffset: 55; }
+      .crack-path[data-stage="2"] { stroke-dasharray: 38; stroke-dashoffset: 38; }
+      .crack-path[data-stage="3"] { stroke-dasharray: 36; stroke-dashoffset: 36; }
+      .crack-path[data-stage="4"] { stroke-dasharray: 26; stroke-dashoffset: 26; }
+      .crack-path[data-stage="5"] { stroke-dasharray: 68; stroke-dashoffset: 68; }
+      .crack-path.active { stroke-dashoffset: 0; opacity: 1; }
+      .crack-path.final-flash { stroke: var(--accent); opacity: 1; filter: drop-shadow(0 0 3px var(--accent)); }
+      .broken-vessel.is-static .crack-path { stroke-dashoffset: 0; opacity: 0.6; }
+      .broken-vessel.is-static .crack-path[data-stage="1"] { opacity: 1; }
+      .broken-vessel.is-static .crack-path[data-stage="5"] { transform: translateX(-4px); opacity: 0.8; }
       @media (prefers-reduced-motion: reduce) {
-        .broken-vessel:not(.is-static) .crack-path { stroke-dashoffset: 0; }
-        .broken-vessel:not(.is-static) .crack-path[data-stage="5"] { transform: translateX(-3px); }
+        .broken-vessel:not(.is-static) .crack-path { stroke-dashoffset: 0; opacity: 1; }
+        .broken-vessel:not(.is-static) .crack-path[data-stage="5"] { transform: translateX(-4px); }
       }
     </style>
   </defs>
 
-  <!-- Vessel outline — elegant etching style -->
+  <!-- Vessel outline — visible, elegant etching -->
   <path class="vessel-outline"
     d="
-      M #{vesselWidth * 0.5} #{vesselHeight * 0.05}
-      Q #{vesselWidth * 0.88} #{vesselHeight * 0.1} #{vesselWidth * 0.9} #{vesselHeight * 0.35}
-      Q #{vesselWidth * 0.93} #{vesselHeight * 0.6} #{vesselWidth * 0.75} #{vesselHeight * 0.8}
-      Q #{vesselWidth * 0.5} #{vesselHeight * 0.95} #{vesselWidth * 0.25} #{vesselHeight * 0.8}
-      Q #{vesselWidth * 0.07} #{vesselHeight * 0.6} #{vesselWidth * 0.1} #{vesselHeight * 0.35}
-      Q #{vesselWidth * 0.12} #{vesselHeight * 0.1} #{vesselWidth * 0.5} #{vesselHeight * 0.05}
+      M #{vesselWidth * 0.5} #{vesselHeight * 0.045}
+      Q #{vesselWidth * 0.88} #{vesselHeight * 0.09} #{vesselWidth * 0.9} #{vesselHeight * 0.33}
+      Q #{vesselWidth * 0.92} #{vesselHeight * 0.58} #{vesselWidth * 0.72} #{vesselHeight * 0.78}
+      Q #{vesselWidth * 0.5} #{vesselHeight * 0.94} #{vesselWidth * 0.28} #{vesselHeight * 0.78}
+      Q #{vesselWidth * 0.08} #{vesselHeight * 0.58} #{vesselWidth * 0.1} #{vesselHeight * 0.33}
+      Q #{vesselWidth * 0.12} #{vesselHeight * 0.09} #{vesselWidth * 0.5} #{vesselHeight * 0.045}
       Z
     " />
 
-  <!-- Stage 1: Hairline crack at neck — always visible on article pages -->
+  <!-- Stage 1: Hairline crack at neck -->
   <path class="crack-path" data-stage="1"
-    d="M #{vesselWidth * 0.5} #{vesselHeight * 0.1}
-       Q #{vesselWidth * 0.54} #{vesselHeight * 0.18} #{vesselWidth * 0.48} #{vesselHeight * 0.32}" />
+    d="M #{vesselWidth * 0.5} #{vesselHeight * 0.09}
+       Q #{vesselWidth * 0.53} #{vesselHeight * 0.17} #{vesselWidth * 0.47} #{vesselHeight * 0.3}" />
 
-  <!-- Stage 2: Right branch from hairline -->
+  <!-- Stage 2: Right branch -->
   <path class="crack-path" data-stage="2"
-    d="M #{vesselWidth * 0.5} #{vesselHeight * 0.18}
-       Q #{vesselWidth * 0.62} #{vesselHeight * 0.26} #{vesselWidth * 0.68} #{vesselHeight * 0.38}" />
+    d="M #{vesselWidth * 0.5} #{vesselHeight * 0.16}
+       Q #{vesselWidth * 0.6} #{vesselHeight * 0.24} #{vesselWidth * 0.66} #{vesselHeight * 0.35}" />
 
-  <!-- Stage 3: Left branch from hairline -->
+  <!-- Stage 3: Left branch -->
   <path class="crack-path" data-stage="3"
-    d="M #{vesselWidth * 0.5} #{vesselHeight * 0.18}
-       Q #{vesselWidth * 0.38} #{vesselHeight * 0.26} #{vesselWidth * 0.32} #{vesselHeight * 0.38}" />
+    d="M #{vesselWidth * 0.5} #{vesselHeight * 0.16}
+       Q #{vesselWidth * 0.4} #{vesselHeight * 0.24} #{vesselWidth * 0.34} #{vesselHeight * 0.35}" />
 
-  <!-- Stage 4: Small chip at right rim -->
+  <!-- Stage 4: Chip at right rim -->
   <path class="crack-path" data-stage="4"
-    d="M #{vesselWidth * 0.88} #{vesselHeight * 0.35}
-       Q #{vesselWidth * 0.82} #{vesselHeight * 0.4} #{vesselWidth * 0.88} #{vesselHeight * 0.46}" />
+    d="M #{vesselWidth * 0.87} #{vesselHeight * 0.33}
+       Q #{vesselWidth * 0.81} #{vesselHeight * 0.38} #{vesselWidth * 0.87} #{vesselHeight * 0.44}" />
 
-  <!-- Stage 5: Main fracture line — splits the vessel -->
+  <!-- Stage 5: Main fracture line -->
   <path class="crack-path" data-stage="5"
-    d="M #{vesselWidth * 0.3} #{vesselHeight * 0.8}
-       Q #{vesselWidth * 0.4} #{vesselHeight * 0.62} #{vesselWidth * 0.5} #{vesselHeight * 0.38}
-       Q #{vesselWidth * 0.6} #{vesselHeight * 0.2} #{vesselWidth * 0.52} #{vesselHeight * 0.1}" />
+    d="M #{vesselWidth * 0.28} #{vesselHeight * 0.78}
+       Q #{vesselWidth * 0.38} #{vesselHeight * 0.6} #{vesselWidth * 0.5} #{vesselHeight * 0.35}
+       Q #{vesselWidth * 0.62} #{vesselHeight * 0.18} #{vesselWidth * 0.52} #{vesselHeight * 0.09}" />
 </svg>

@@ -1,15 +1,14 @@
 /**
  * Truth Drops — vanilla interaction layer
  * Scroll reveals, reading ribbon, sticky header shrink, footnote popovers,
- * editor note unfiling, Broken Vessel scroll fracture, Ink Drop page transitions.
- * No frameworks, ~5KB gzipped. Respects prefers-reduced-motion.
+ * editor note unfiling, Broken Vessel scroll fracture, Realistic Ink Drop page transitions.
+ * No frameworks, ~6KB gzipped. Respects prefers-reduced-motion.
  */
 
 (function () {
   'use strict';
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const easeOutExpo = (t) => 1 - Math.pow(2, -10 * t);
 
   // ============================================================
   // 1. Scroll Reveal (IntersectionObserver)
@@ -224,7 +223,10 @@
           crack.style.strokeDashoffset = '0';
           crack.classList.add('active');
         });
-        vessel.querySelectorAll('.crack-path[data-stage="5"]').forEach(c => c.style.transform = 'translateX(-3px)');
+        vessel.querySelectorAll('.crack-path[data-stage="5"]').forEach(c => {
+          c.style.transform = 'translateX(-4px)';
+          c.style.transformOrigin = 'center';
+        });
       });
       return;
     }
@@ -232,13 +234,13 @@
     const vessels = document.querySelectorAll('.broken-vessel:not(.is-static)');
     if (!vessels.length) return;
 
-    // Crack stages in order of appearance (matching CSS data-stage attributes)
+    // Crack stages in order of appearance
     const stages = [
       { selector: '.crack-path[data-stage="1"]', threshold: 0.0 },      // Hairline - visible from start
-      { selector: '.crack-path[data-stage="2"]', threshold: 0.2 },     // Right branch
-      { selector: '.crack-path[data-stage="3"]', threshold: 0.2 },     // Left branch
-      { selector: '.crack-path[data-stage="4"]', threshold: 0.35 },    // Chip at rim
-      { selector: '.crack-path[data-stage="5"]', threshold: 0.5 },     // Main fracture
+      { selector: '.crack-path[data-stage="2"]', threshold: 0.18 },     // Right branch
+      { selector: '.crack-path[data-stage="3"]', threshold: 0.18 },     // Left branch
+      { selector: '.crack-path[data-stage="4"]', threshold: 0.32 },     // Chip at rim
+      { selector: '.crack-path[data-stage="5"]', threshold: 0.48 },     // Main fracture
     ];
 
     let ticking = false;
@@ -246,7 +248,7 @@
     function update() {
       const article = document.querySelector('.drop__body') || document.querySelector('main article');
       if (!article) {
-        // On homepage (static vessel), just show hairline crack
+        // On homepage (static vessel), show hairline crack
         vessels.forEach(vessel => {
           const crack = vessel.querySelector('.crack-path[data-stage="1"]');
           if (crack) {
@@ -278,15 +280,15 @@
           }
 
           // Add split transform for final fracture when near end
-          if (selector.includes('data-stage="5"') && progress >= 0.88) {
-            crack.style.transform = 'translateX(-3px)';
+          if (selector.includes('data-stage="5"') && progress >= 0.85) {
+            crack.style.transform = 'translateX(-4px)';
             crack.style.transformOrigin = 'center';
           }
 
           // Flash accent on final crack at sign-off (near end of article)
           if (selector.includes('data-stage="5"') && progress >= 0.95) {
             crack.classList.add('final-flash');
-            setTimeout(() => crack.classList.remove('final-flash'), 1000);
+            setTimeout(() => crack.classList.remove('final-flash'), 1200);
           }
         });
       });
@@ -303,11 +305,11 @@
 
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll, { passive: true });
-    update(); // initial
+    update();
   }
 
   // ============================================================
-  // 7. Ink Drop Page Transition (View Transitions API + custom overlay)
+  // 7. Realistic Ink Drop Page Transition
   // ============================================================
   function initInkDropTransition() {
     if (prefersReduced) return;
@@ -316,45 +318,43 @@
     const transitionOverlay = document.getElementById('ink-drop-transition');
     if (!transitionOverlay) return;
 
-    const drop = transitionOverlay.querySelector('.ink-drop');
-    const ripple1 = transitionOverlay.querySelector('.ink-ripple--1');
-    const ripple2 = transitionOverlay.querySelector('.ink-ripple--2');
-    const svg = transitionOverlay.querySelector('.ink-drop-svg');
-
     let isTransitioning = false;
 
-    // Timing constants matching the new elegant CSS animations
-    const DROP_DURATION = 1200;
-    const RIPPLE_DELAY = 350;
+    // Timing matching the new realistic CSS animations
+    const CORE_DURATION = 1400;
+    const OUTER_DURATION = 1600;
+    const TENDRIL_DURATION = 1800;
+    const PARTICLE_DURATION = 2000;
     const REVEAL_DELAY = 500;
-    const TOTAL_DURATION = 1800;
+    const TOTAL_DURATION = 2400;
 
     function playTransition(href, clickX, clickY) {
       if (isTransitioning) return;
       isTransitioning = true;
 
-      // Position SVG at click point (or center if not available)
+      // Position SVG at click point
       const x = clickX ?? window.innerWidth / 2;
       const y = clickY ?? window.innerHeight / 2;
-      svg.style.transformOrigin = `${x}px ${y}px`;
+      const svg = transitionOverlay.querySelector('.ink-drop-svg');
+      if (svg) svg.style.transformOrigin = `${x}px ${y}px`;
 
       transitionOverlay.hidden = false;
       transitionOverlay.classList.add('playing');
 
-      // Wait for drop to land, then start ripple + reveal
+      // Start reveal mask after core settles
       setTimeout(() => {
         transitionOverlay.classList.add('revealing');
         transitionOverlay.classList.remove('playing');
-      }, REVEAL_DELAY);
+      }, REVEAL_DELAY + 100);
 
-      // Start view transition after ripple begins
+      // Start view transition after reveal begins
       setTimeout(() => {
         document.startViewTransition(() => {
           window.location.href = href;
         });
-      }, REVEAL_DELAY + 50);
+      }, REVEAL_DELAY + 200);
 
-      // Cleanup after transition completes
+      // Cleanup
       setTimeout(() => {
         transitionOverlay.classList.remove('revealing');
         transitionOverlay.hidden = true;
@@ -389,7 +389,7 @@
   }
 
   // ============================================================
-  // 8. Homepage Vessel Easter Egg — click to crack + drop
+  // 8. Homepage Vessel Easter Egg — click to crack + realistic drop
   // ============================================================
   function initVesselEasterEgg() {
     if (prefersReduced) return;
@@ -403,59 +403,48 @@
       if (cracked) return;
       cracked = true;
 
-      // Animate all cracks sequentially with elegant timing
+      // Animate all cracks sequentially
       const allCracks = homeVessel.querySelectorAll('.crack-path');
       allCracks.forEach((crack, i) => {
         setTimeout(() => {
           crack.style.strokeDashoffset = '0';
           crack.classList.add('active');
-        }, i * 180);
+        }, i * 220);
       });
 
       // Split pieces
       setTimeout(() => {
-        homeVessel.querySelector('.crack-path[data-stage="5"]').style.transform = 'translateX(-3px)';
-        homeVessel.querySelector('.crack-path[data-stage="5"]').style.transformOrigin = 'center';
-      }, 800);
+        const mainCrack = homeVessel.querySelector('.crack-path[data-stage="5"]');
+        if (mainCrack) {
+          mainCrack.style.transform = 'translateX(-4px)';
+          mainCrack.style.transformOrigin = 'center';
+        }
+      }, 1000);
 
-      // Spawn ink drop at vessel position
+      // Spawn realistic ink drop
       setTimeout(() => {
         const rect = homeVessel.getBoundingClientRect();
-        spawnInkDrop(rect.left + rect.width / 2, rect.top + rect.height / 2);
-      }, 900);
+        spawnRealisticInkDrop(rect.left + rect.width / 2, rect.top + rect.height / 2);
+      }, 1100);
     });
   }
 
-  function spawnInkDrop(x, y) {
+  function spawnRealisticInkDrop(x, y) {
     const overlay = document.getElementById('ink-drop-transition');
     if (!overlay) return;
 
     const svg = overlay.querySelector('.ink-drop-svg');
-    const drop = overlay.querySelector('.ink-drop');
-    const ripple1 = overlay.querySelector('.ink-ripple--1');
-    const ripple2 = overlay.querySelector('.ink-ripple--2');
-
     overlay.hidden = false;
-    svg.style.transformOrigin = `${x}px ${y}px`;
+    if (svg) svg.style.transformOrigin = `${x}px ${y}px`;
 
-    // Trigger animations with new elegant timing
-    drop.style.animation = 'none';
-    ripple1.style.animation = 'none';
-    ripple2.style.animation = 'none';
+    // Trigger all animations
+    overlay.classList.add('playing');
 
-    // Force reflow
-    void drop.offsetWidth;
-
-    drop.style.animation = 'drop-fall 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
-    ripple1.style.animation = 'ripple-expand 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
-    ripple2.style.animation = 'ripple-expand 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
-
+    // Cleanup
     setTimeout(() => {
+      overlay.classList.remove('playing');
       overlay.hidden = true;
-      drop.style.animation = '';
-      ripple1.style.animation = '';
-      ripple2.style.animation = '';
-    }, 1800);
+    }, 2400);
   }
 
   // ============================================================

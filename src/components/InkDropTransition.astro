@@ -1,21 +1,64 @@
 ---
 /**
- * InkDropTransition — elegant page transition overlay
- * Slow, refined, classic feel matching the editorial aesthetic
- * Single ink drop falls, creates a subtle ripple that becomes the page reveal
+ * InkDropTransition — ultra-realistic ink-in-water page transition
+ * Multiple diffusion layers, organic tendrils, realistic fluid dynamics
  */
 ---
 <div id="ink-drop-transition" class="ink-drop-transition" aria-hidden="true" hidden>
-  <svg class="ink-drop-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-    <!-- Single elegant drop -->
-    <path class="ink-drop" d="M 50 5
-      C 50 5, 68 18, 68 42
-      C 68 60, 50 90, 50 90
-      C 50 90, 32 60, 32 42
-      C 32 18, 50 5, 50 5 Z" />
-    <!-- Two subtle ripple rings -->
-    <circle class="ink-ripple ink-ripple--1" cx="50" cy="50" r="0" />
-    <circle class="ink-ripple ink-ripple--2" cx="50" cy="50" r="0" />
+  <svg class="ink-drop-svg" viewBox="0 0 400 400" preserveAspectRatio="none" style="filter: url(#ink-blur);">
+    <defs>
+      <!-- Realistic ink blur/diffusion filter -->
+      <filter id="ink-blur" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur1"/>
+        <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur2"/>
+        <feBlend in="blur1" in2="blur2" mode="screen" result="combined"/>
+        <feComponentTransfer in="combined">
+          <feFuncA type="table" tableValues="0 0.15 0.35 0.55 0.75 0.9 1"/>
+        </feComponentTransfer>
+      </filter>
+
+      <!-- Radial gradient for ink density -->
+      <radialGradient id="ink-core" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.95"/>
+        <stop offset="35%" stop-color="var(--accent)" stop-opacity="0.6"/>
+        <stop offset="65%" stop-color="var(--accent)" stop-opacity="0.25"/>
+        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+      </radialGradient>
+
+      <radialGradient id="ink-outer" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="var(--accent)" stop-opacity="0.3"/>
+        <stop offset="50%" stop-color="var(--accent)" stop-opacity="0.1"/>
+        <stop offset="100%" stop-color="var(--accent)" stop-opacity="0"/>
+      </radialGradient>
+    </defs>
+
+    <!-- Layer 1: Core ink drop (dense center) -->
+    <circle class="ink-core" cx="200" cy="200" r="0" fill="url(#ink-core)" />
+
+    <!-- Layer 2: Outer diffusion cloud -->
+    <circle class="ink-outer" cx="200" cy="200" r="0" fill="url(#ink-outer)" />
+
+    <!-- Layer 3: Organic tendrils (multiple paths that grow outward) -->
+    <g class="ink-tendrils" fill="var(--accent)" fill-opacity="0.4">
+      <path class="tendril t1" d="M200,200" />
+      <path class="tendril t2" d="M200,200" />
+      <path class="tendril t3" d="M200,200" />
+      <path class="tendril t4" d="M200,200" />
+      <path class="tendril t5" d="M200,200" />
+      <path class="tendril t6" d="M200,200" />
+    </g>
+
+    <!-- Layer 4: Fine particle dispersion -->
+    <g class="ink-particles" fill="var(--accent)" fill-opacity="0.5">
+      <circle class="particle p1" cx="200" cy="200" r="0" />
+      <circle class="particle p2" cx="200" cy="200" r="0" />
+      <circle class="particle p3" cx="200" cy="200" r="0" />
+      <circle class="particle p4" cx="200" cy="200" r="0" />
+      <circle class="particle p5" cx="200" cy="200" r="0" />
+      <circle class="particle p6" cx="200" cy="200" r="0" />
+      <circle class="particle p7" cx="200" cy="200" r="0" />
+      <circle class="particle p8" cx="200" cy="200" r="0" />
+    </g>
   </svg>
 </div>
 
@@ -36,58 +79,116 @@
     max-width: 100vw;
     max-height: 100vh;
   }
-  .ink-drop {
-    fill: var(--accent);
-    transform-origin: 50% 90%;
-    transform: translateY(-110vh) scale(0.5);
+
+  /* Core ink drop - dense center that falls */
+  .ink-core {
+    transform-origin: 200px 200px;
+    transform: translateY(-220vh) scale(0.3);
     opacity: 0;
-    filter: drop-shadow(0 2px 8px rgba(192,57,43,0.15));
   }
-  .ink-ripple {
-    fill: none;
+
+  /* Outer diffusion cloud - larger, more transparent */
+  .ink-outer {
+    transform-origin: 200px 200px;
+    transform: translateY(-220vh) scale(0.2);
+    opacity: 0;
+  }
+
+  /* Tendrils - organic paths that grow */
+  .ink-tendrils .tendril {
     stroke: var(--accent);
     stroke-width: 1.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-dasharray: 200;
+    stroke-dashoffset: 200;
     opacity: 0;
-    transform-origin: 50% 50%;
+    filter: drop-shadow(0 0 1px var(--accent));
   }
-  .ink-ripple--1 { stroke-width: 1.8; }
-  .ink-ripple--2 { stroke-width: 1; }
 
-  /* Animation states controlled via JS classes */
-  .ink-drop-transition.playing .ink-drop {
-    animation: drop-fall 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  /* Particles - fine dispersion */
+  .ink-particles .particle {
+    transform-origin: 200px 200px;
+    transform: translateY(-220vh) scale(0);
+    opacity: 0;
   }
-  .ink-drop-transition.playing .ink-ripple {
-    animation: ripple-expand 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+
+  /* Animation states */
+  .ink-drop-transition.playing .ink-core {
+    animation: core-fall 1.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
   }
+  .ink-drop-transition.playing .ink-outer {
+    animation: outer-fall 1.6s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  }
+  .ink-drop-transition.playing .ink-tendrils .tendril {
+    animation: tendril-grow 1.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
+  .ink-drop-transition.playing .ink-particles .particle {
+    animation: particle-disperse 2.0s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+  }
+
+  /* Reveal mask - uses the outer diffusion as the wipe */
   .ink-drop-transition.revealing .ink-drop-svg {
     clip-path: circle(0% at 50% 50%);
-    animation: clip-reveal 1.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+    animation: clip-reveal 2.2s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
   }
 
-  @keyframes drop-fall {
-    0% { transform: translateY(-110vh) scale(0.5); opacity: 0; }
-    8% { opacity: 0.3; }
-    15% { opacity: 1; }
-    55% { transform: translateY(0) scale(1.15, 0.65); opacity: 1; }
-    65% { transform: translateY(0) scale(0.9, 1.1); opacity: 1; }
-    75% { transform: translateY(0) scale(1.02, 0.98); opacity: 1; }
+  /* Stagger tendril animations */
+  .ink-drop-transition.playing .tendril.t1 { animation-delay: 0.15s; }
+  .ink-drop-transition.playing .tendril.t2 { animation-delay: 0.22s; }
+  .ink-drop-transition.playing .tendril.t3 { animation-delay: 0.29s; }
+  .ink-drop-transition.playing .tendril.t4 { animation-delay: 0.36s; }
+  .ink-drop-transition.playing .tendril.t5 { animation-delay: 0.43s; }
+  .ink-drop-transition.playing .tendril.t6 { animation-delay: 0.5s; }
+
+  /* Stagger particles */
+  .ink-drop-transition.playing .particle.p1 { animation-delay: 0.4s; }
+  .ink-drop-transition.playing .particle.p2 { animation-delay: 0.45s; }
+  .ink-drop-transition.playing .particle.p3 { animation-delay: 0.5s; }
+  .ink-drop-transition.playing .particle.p4 { animation-delay: 0.55s; }
+  .ink-drop-transition.playing .particle.p5 { animation-delay: 0.6s; }
+  .ink-drop-transition.playing .particle.p6 { animation-delay: 0.65s; }
+  .ink-drop-transition.playing .particle.p7 { animation-delay: 0.7s; }
+  .ink-drop-transition.playing .particle.p8 { animation-delay: 0.75s; }
+
+  @keyframes core-fall {
+    0% { transform: translateY(-220vh) scale(0.3); opacity: 0; }
+    5% { opacity: 0.2; }
+    12% { opacity: 1; }
+    50% { transform: translateY(0) scale(1.3, 0.5); opacity: 1; }
+    62% { transform: translateY(0) scale(0.85, 1.15); opacity: 1; }
+    72% { transform: translateY(0) scale(1.05, 0.95); opacity: 1; }
     100% { transform: translateY(0) scale(1); opacity: 1; }
   }
-  @keyframes ripple-expand {
-    0% { r: 0; opacity: 0; }
-    25% { opacity: 0.25; }
-    45% { opacity: 0.15; }
-    100% { r: 85; opacity: 0; }
+  @keyframes outer-fall {
+    0% { transform: translateY(-220vh) scale(0.2); opacity: 0; }
+    8% { opacity: 0.15; }
+    18% { opacity: 0.6; }
+    55% { transform: translateY(0) scale(1.8, 0.6); opacity: 0.6; }
+    70% { transform: translateY(0) scale(1.1, 0.9); opacity: 0.5; }
+    100% { transform: translateY(0) scale(1); opacity: 0.45; }
+  }
+  @keyframes tendril-grow {
+    0% { stroke-dashoffset: 200; opacity: 0; }
+    15% { opacity: 0.5; }
+    40% { opacity: 0.7; }
+    100% { stroke-dashoffset: 0; opacity: 0; }
+  }
+  @keyframes particle-disperse {
+    0% { transform: translateY(-220vh) scale(0); opacity: 0; }
+    25% { opacity: 0.6; }
+    55% { transform: translateY(var(--py, 0)) translateX(var(--px, 0)) scale(1); opacity: 0.5; }
+    80% { opacity: 0.2; }
+    100% { transform: translateY(var(--py-end, 0)) translateX(var(--px-end, 0)) scale(0.5); opacity: 0; }
   }
   @keyframes clip-reveal {
     0% { clip-path: circle(0% at 50% 50%); }
-    100% { clip-path: circle(150% at 50% 50%); }
+    100% { clip-path: circle(160% at 50% 50%); }
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .ink-drop,
-    .ink-ripple,
+    .ink-core, .ink-outer, .ink-tendrils .tendril, .ink-particles .particle,
     .ink-drop-svg { animation: none !important; }
   }
 </style>

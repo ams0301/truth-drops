@@ -3,7 +3,7 @@ export const SITE = {
   tagline: 'A private quarterly. Essays, notes, and dispatches from the periphery of the algorithm.',
   author: 'The Editor',
   email: 'editor@truthdrops.example',
-  url: 'https://truth-drops.pages.dev',
+  url: 'https://truth-drops.mohanaadarsh3.workers.dev',
   giscus: {
     enabled: false,
     repo: 'your-user/your-repo',

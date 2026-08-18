@@ -215,7 +215,7 @@
 
   // ============================================================
   // 6. Broken Amphora — Scroll-driven fracture (article pages)
-  // 5 stages: hairline → extends+chip → branch → full separation
+  // Crack draws down, then fragments separate
   // ============================================================
   function initBrokenAmphora() {
     if (prefersReduced) {
@@ -224,7 +224,6 @@
           crack.style.strokeDashoffset = '0';
           crack.classList.add('active');
         });
-        // Separate pieces on reduced motion
         vessel.querySelectorAll('.vessel-piece').forEach(p => p.classList.add('separated'));
       });
       return;
@@ -233,24 +232,15 @@
     const vessels = document.querySelectorAll('.broken-vessel:not(.is-static)');
     if (!vessels.length) return;
 
-    // 5 crack stages matching the SVG data-stage attributes
-    const stages = [
-      { selector: '.crack-path[data-stage="1"]', threshold: 0.00 },   // Hairline from rim ~40% neck
-      { selector: '.crack-path[data-stage="2"]', threshold: 0.10 },   // Extends past shoulder
-      { selector: '.crack-path[data-stage="3"]', threshold: 0.18 },   // Chip at rim appears
-      { selector: '.crack-path[data-stage="4"]', threshold: 0.28 },   // Branch toward belly
-      { selector: '.crack-path[data-stage="5"]', threshold: 0.55 },   // Full fracture to base
-    ];
-
     let ticking = false;
     let flashDone = false;
 
     function update() {
       const article = document.querySelector('.drop__body') || document.querySelector('main article');
       if (!article) {
-        // On homepage (static vessel), show hairline
+        // On homepage (static vessel), show crack
         vessels.forEach(vessel => {
-          const crack = vessel.querySelector('.crack-path[data-stage="1"]');
+          const crack = vessel.querySelector('.crack-path');
           if (crack) {
             crack.style.strokeDashoffset = '0';
             crack.classList.add('active');
@@ -266,32 +256,59 @@
       const progress = Math.max(0, Math.min(1, scrolled / (articleHeight + viewportHeight)));
 
       vessels.forEach(vessel => {
-        stages.forEach(({ selector, threshold }) => {
-          const crack = vessel.querySelector(selector);
-          if (!crack) return;
+        const crack = vessel.querySelector('.crack-path');
+        const leftPiece = vessel.querySelector('.fragment-left');
+        const rightPiece = vessel.querySelector('.fragment-right');
 
-          const isActive = progress >= threshold;
-          if (isActive) {
-            crack.style.strokeDashoffset = '0';
-            crack.classList.add('active');
-          } else {
-            crack.style.strokeDashoffset = crack.getAttribute('stroke-dasharray') || '0';
-            crack.classList.remove('active');
+        if (crack) {
+          // Crack draws from top to bottom (0% to 60% scroll)
+          const crackProgress = Math.min(1, progress / 0.6);
+          if (crackProgress > 0) {
+            const totalLength = 180; // matches stroke-dasharray
+            crack.style.strokeDashoffset = (totalLength * (1 - crackProgress)).toString();
+            if (crackProgress >= 1) {
+              crack.style.strokeDashoffset = '0';
+              crack.classList.add('active');
+            } else {
+              crack.classList.remove('active');
+            }
           }
-        });
+        }
+
+        // Fragments separate after crack completes (60% to 85% scroll)
+        const separationProgress = Math.max(0, Math.min(1, (progress - 0.6) / 0.25));
+        if (separationProgress > 0) {
+          const leftPiece = vessel.querySelector('.fragment-left');
+          const rightPiece = vessel.querySelector('.fragment-right');
+          
+          if (leftPiece && rightPiece) {
+            const tx = parseFloat(leftPiece.dataset.tx) || -12;
+            const ty = parseFloat(leftPiece.dataset.ty) || 4;
+            const rot = leftPiece.dataset.rot || '-3deg';
+            
+            leftPiece.style.transform = `
+              translateX(${tx * separationProgress}px)
+              translateY(${ty * separationProgress}px)
+              rotate(${parseFloat(rot) * separationProgress}deg)
+            `;
+            rightPiece.style.transform = `
+              translateX(${-parseFloat(leftPiece.dataset.tx) * separationProgress}px)
+              translateY(${ty * separationProgress}px)
+              rotate(${-parseFloat(rot) * separationProgress}deg)
+            `;
+            
+            if (separationProgress >= 1) {
+              leftPiece.classList.add('separated');
+              rightPiece.classList.add('separated');
+            }
+          }
+        }
 
         // Final flash at sign-off (95% scroll)
-        if (!flashDone && progress >= 0.95) {
-          vessel.querySelectorAll('.crack-path').forEach(crack => {
-            crack.classList.add('final-flash');
-          });
-          flashDone = true;
-          setTimeout(() => {
-            vessel.querySelectorAll('.crack-path').forEach(crack => {
-              crack.classList.remove('final-flash');
-            });
-            flashDone = false;
-          }, 600);
+        const crack = vessel.querySelector('.crack-path');
+        if (crack && progress >= 0.95) {
+          crack.classList.add('final-flash');
+          setTimeout(() => crack.classList.remove('final-flash'), 600);
         }
       });
 
@@ -350,27 +367,36 @@
       if (cracked) return;
       cracked = true;
 
-      // Animate all cracks sequentially
-      const allCracks = homeVase.querySelectorAll('.crack-path');
-      allCracks.forEach((crack, i) => {
-        setTimeout(() => {
-          crack.style.strokeDashoffset = '0';
-          crack.classList.add('active');
-        }, i * 160);
-      });
+      // Animate crack drawing
+      const crack = homeVase.querySelector('.crack-path');
+      if (crack) {
+        crack.style.strokeDashoffset = '0';
+        crack.classList.add('active');
+      }
+
+      // Separate fragments
+      setTimeout(() => {
+        const leftPiece = homeVase.querySelector('.fragment-left');
+        const rightPiece = homeVase.querySelector('.fragment-right');
+        if (leftPiece && rightPiece) {
+          leftPiece.classList.add('separated');
+          rightPiece.classList.add('separated');
+        }
+      }, 800);
 
       // Final flash
       setTimeout(() => {
-        homeVase.querySelectorAll('.crack-path').forEach(crack => {
+        const crack = homeVase.querySelector('.crack-path');
+        if (crack) {
           crack.classList.add('final-flash');
           setTimeout(() => crack.classList.remove('final-flash'), 1200);
-        });
-      }, allCracks.length * 160 + 200);
+        }
+      }, 1600);
     });
   }
 
   // ============================================================
-  // 9. Custom cursor for article body (text caret feel)
+  // 8. Custom cursor for article body (text caret feel)
   // ============================================================
   function initCustomCursor() {
     if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;

@@ -2,28 +2,47 @@
 import Base from '../layouts/Base.astro';
 import ArticleCard from '../components/ArticleCard.astro';
 import { SITE } from '../config';
-import { stamp } from '../lib/format';
+import { stamp, tagSlug } from '../lib/format';
 import { getCollection } from 'astro:content';
 
 const posts = (await getCollection('articles', (p) => !p.data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
 
 const [feature, ...rest] = posts;
-const recent = rest.slice(0, 4);
+const recent = rest.slice(0, 6); // capped at 6
+
+// Collect unique tags from all posts for the filter rail
+const allTags = [...new Set(posts.flatMap(p => p.data.tags))].sort();
+const featuredTags = allTags.slice(0, 8); // limit visible tags
 ---
 <Base>
-  <!-- feature / lead -->
+  <!-- Masthead with issue info + tag filter rail -->
+  <header class="home-masthead">
+    <div class="shell home-masthead__inner">
+      <div class="home-masthead__meta reveal">
+        <p class="label label--accent">Issue {stamp(feature?.data.date ?? new Date())}</p>
+        <p class="home-masthead__subhead">A private quarterly. Essays, notes, and dispatches from the periphery of the algorithm.</p>
+      </div>
+
+      {featuredTags.length > 0 && (
+        <nav class="home-masthead__tags reveal" aria-label="Filter by topic">
+          <a href="/" class="tag-filter is-active" data-tag="all">All</a>
+          {featuredTags.map(tag => (
+            <a href={`/tags/${tagSlug(tag)}`} class="tag-filter" data-tag={tagSlug(tag)}>{tag}</a>
+          ))}
+        </nav>
+      )}
+    </div>
+  </header>
+
+  <!-- feature / lead story -->
   {feature && (
-    <section class="shell feature">
-      <p class="feature__eyebrow">
-        <span class="feature__eyebrow-mark">№</span>
-        <span>Issue {stamp(feature.data.date)} — Current</span>
-      </p>
+    <section class="shell feature reveal">
       <ArticleCard post={feature} variant="feature" />
     </section>
   )}
 
-  <div class="rule-diamond">
+  <div class="rule-diamond reveal">
     <span class="rule-diamond__mark">◆</span>
   </div>
 
@@ -45,13 +64,31 @@ const recent = rest.slice(0, 4);
     )}
   </section>
 
-  <div class="rule-diamond">
+  <!-- start here for new readers -->
+  {posts.length >= 3 && (
+    <section class="shell home-start reveal">
+      <p class="label label--strong">If this is your first visit</p>
+      <div class="home-start__grid">
+        {posts.slice(0, 3).map((p, i) => (
+          <a href={`/drops/${p.slug}`} class="home-start__item">
+            <span class="home-start__num">{i + 1}</span>
+            <div>
+              <h3 class="home-start__title">{p.data.title}</h3>
+              <p class="home-start__desc">{p.data.description}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <div class="rule-diamond reveal">
     <span class="rule-diamond__mark">◆</span>
   </div>
 
   <!-- subscribe -->
-  <section class="shell home-cta">
-    <p class="home-cta__label">Correspondence</p>
+  <section class="shell home-cta reveal">
+    <p class="home-cta__label label">Correspondence</p>
     <h2 class="home-cta__title">Receive each issue as it is published.</h2>
     <p class="home-cta__desc">One letter, dispatched the moment a new piece is filed. No promotions, no second email, no tracking of any kind. Or read by way of <a href="/rss.xml">RSS</a>, should you prefer your reading list without intermediaries.</p>
     <div class="home-cta__row">
@@ -62,22 +99,63 @@ const recent = rest.slice(0, 4);
 </Base>
 
 <style>
-  .feature { padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 3rem); }
-  .feature__eyebrow {
-    display: flex; align-items: center; gap: .6em;
+  /* Masthead */
+  .home-masthead {
+    padding-block: clamp(2.5rem, 6vw, 4rem) clamp(1.5rem, 4vw, 2rem);
+    border-bottom: 1px solid var(--rule);
+    background: linear-gradient(180deg, var(--ink-0) 0%, var(--ink-1) 100%);
+  }
+  .home-masthead__inner { max-width: 1180px; margin-inline: auto; padding-inline: var(--pad-x); }
+  .home-masthead__meta { margin-bottom: 1.5rem; }
+  .home-masthead__subhead {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 2.5vw, 1.35rem);
+    color: var(--text-secondary);
+    max-width: 48ch;
+    margin: .5rem 0 0;
+    font-variation-settings: 'opsz' 36;
+  }
+
+  /* Tag filter rail */
+  .home-masthead__tags {
+    display: flex; flex-wrap: wrap; gap: .5rem;
     font-family: var(--font-mono);
     font-size: .72rem;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    color: var(--text-faint);
-    margin: 0 0 1.5rem;
+    letter-spacing: .04em;
   }
-  .feature__eyebrow-mark { color: var(--accent); }
+  .tag-filter {
+    display: inline-flex; align-items: center; gap: .3em;
+    color: var(--text-secondary);
+    text-decoration: none;
+    padding: .35em .75em;
+    border: 1px solid var(--rule);
+    border-radius: 999px;
+    background: var(--ink-0);
+    transition: color var(--duration-fast) var(--ease-out-expo),
+                border-color var(--duration-fast) var(--ease-out-expo),
+                background var(--duration-fast) var(--ease-out-expo);
+  }
+  .tag-filter:hover,
+  .tag-filter.is-active {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-pale);
+  }
+  .tag-filter:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--accent-pale);
+  }
 
+  /* Feature / lead story */
+  .feature { padding-block: clamp(2rem, 5vw, 4rem) 0; }
+  .feature .card--feature .card__title { max-width: 22ch; }
+
+  /* Recent */
   .home-recent { padding-block: clamp(2rem, 5vw, 3rem); }
   .home-recent__head { margin-bottom: 2.5rem; max-width: 60ch; }
   .home-recent__head h2 { margin: 0 0 .4em; font-style: italic; font-variation-settings: 'opsz' 96; }
-  .home-recent__count { color: var(--text-dim); font-size: 1.05rem; margin: 0; max-width: 50ch; }
+  .home-recent__count { color: var(--text-secondary); font-size: 1.05rem; margin: 0; max-width: 50ch; font-family: var(--font-display); font-variation-settings: 'opsz' 36; }
 
   .home-recent__grid {
     display: grid;
@@ -89,24 +167,54 @@ const recent = rest.slice(0, 4);
     font-family: var(--font-display);
     font-style: italic;
     font-size: 1.1rem;
-    color: var(--text);
+    color: var(--text-primary);
     text-decoration: none;
     border-bottom: 1px solid var(--accent-soft);
     padding-bottom: 2px;
-    transition: color .25s var(--ease), border-color .25s var(--ease);
+    transition: color var(--duration-fast) var(--ease-out-expo), border-color var(--duration-fast) var(--ease-out-expo);
   }
   .home-recent__link:hover { color: var(--accent); border-color: var(--accent); }
 
-  .home-cta { padding-block: clamp(2rem, 5vw, 3rem) clamp(3rem, 6vw, 4rem); max-width: 920px; }
-  .home-cta__label {
-    font-family: var(--font-mono);
-    color: var(--text-faint);
-    font-size: .72rem;
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    margin: 0 0 1rem;
+  /* Start here */
+  .home-start { padding-block: clamp(2rem, 5vw, 3rem); max-width: 920px; }
+  .home-start__grid {
+    display: grid; gap: 1.5rem; margin-top: 1.5rem;
   }
+  .home-start__item {
+    display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: start;
+    color: var(--text-primary); text-decoration: none;
+    padding: 1.25rem; border: 1px solid var(--rule); border-radius: var(--radius-lg);
+    background: var(--ink-1);
+    transition: border-color var(--duration-fast) var(--ease-out-expo),
+                background var(--duration-fast) var(--ease-out-expo),
+                transform var(--duration-fast) var(--ease-out-expo);
+  }
+  .home-start__item:hover {
+    border-color: var(--accent);
+    background: var(--ink-2);
+    transform: translateX(4px);
+    text-decoration: none;
+  }
+  .home-start__num {
+    font-family: var(--font-display);
+    font-size: 2.5rem; font-weight: 300; line-height: 1;
+    color: var(--accent); opacity: .6;
+    font-variation-settings: 'opsz' 144;
+  }
+  .home-start__title { font-size: 1.2rem; margin: 0 0 .35em; font-variation-settings: 'opsz' 48; }
+  .home-start__desc { color: var(--text-secondary); font-size: .95rem; margin: 0; max-width: 45ch; }
+
+  /* CTA */
+  .home-cta { padding-block: clamp(2rem, 5vw, 3rem) clamp(3rem, 6vw, 4rem); max-width: 920px; }
+  .home-cta__label { margin: 0 0 1rem; }
   .home-cta__title { max-width: 22ch; font-style: italic; font-variation-settings: 'opsz' 96; }
-  .home-cta__desc { color: var(--text-dim); max-width: 56ch; margin: 1.25rem 0 2rem; font-size: 1.05rem; line-height: 1.7; }
+  .home-cta__desc { color: var(--text-secondary); max-width: 56ch; margin: 1.25rem 0 2rem; font-size: 1.05rem; line-height: 1.7; }
   .home-cta__row { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  @media (max-width: 720px) {
+    .home-recent__grid { grid-template-columns: 1fr; gap: 1.5rem; }
+    .home-start__grid { grid-template-columns: 1fr; }
+    .home-start__item { grid-template-columns: 1fr; }
+    .home-start__num { font-size: 1.5rem; }
+  }
 </style>

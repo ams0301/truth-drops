@@ -13,7 +13,7 @@ const tags = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeComp
 ---
 <Base title="Index" description="Browse the publication by subject.">
   <section class="shell page-head">
-    <p class="page-head__eyebrow">Subject Index</p>
+    <p class="page-head__eyebrow label label--accent">Subject Index</p>
     <h1 class="page-head__title">By topic.</h1>
     <p class="page-head__desc">{tags.length} subjects, {posts.length} issues.</p>
   </section>
@@ -24,7 +24,7 @@ const tags = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeComp
         <li class="index__row">
           <a class="index__link" href={`/tags/${tagSlug(tag)}`}>
             <span class="index__label">{tag}</span>
-            <span class="index__count">{n}</span>
+            <span class="index__count label">{n}</span>
           </a>
         </li>
       ))}
@@ -34,26 +34,18 @@ const tags = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeComp
 
 <style>
   .page-head { padding-block: clamp(3rem, 8vw, 5rem) clamp(2rem, 4vw, 3rem); text-align: center; }
-  .page-head__eyebrow {
-    font-family: var(--font-mono);
-    font-size: .72rem;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 1.25rem;
-  }
   .page-head__title { font-style: italic; margin: 0 auto .6em; font-variation-settings: 'opsz' 144; }
-  .page-head__desc { color: var(--text-dim); font-family: var(--font-display); font-style: italic; font-size: 1.05rem; font-variation-settings: 'opsz' 36; }
+  .page-head__desc { color: var(--text-secondary); font-family: var(--font-display); font-style: italic; font-size: 1.05rem; font-variation-settings: 'opsz' 36; }
 
   .index-wrap { padding-bottom: 4rem; max-width: 760px; }
-  .index { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--line-strong); }
-  .index__row { border-bottom: 1px solid var(--line-fine); }
+  .index { list-style: none; padding: 0; margin: 0; border-top: 1px solid var(--rule-strong); }
+  .index__row { border-bottom: 1px solid var(--rule); }
   .index__link {
     display: flex; align-items: baseline; justify-content: space-between;
     padding: 1.1rem 0;
     text-decoration: none;
-    color: var(--text);
-    transition: color .2s var(--ease), padding .25s var(--ease);
+    color: var(--text-primary);
+    transition: color var(--duration-fast) var(--ease-out-expo), padding var(--duration-base) var(--ease-out-expo);
   }
   .index__link:hover { color: var(--accent); padding-inline-start: .5rem; }
   .index__label {
@@ -62,10 +54,5 @@ const tags = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeComp
     font-size: 1.4rem;
     font-variation-settings: 'opsz' 48;
   }
-  .index__count {
-    font-family: var(--font-mono);
-    font-size: .78rem;
-    color: var(--text-faint);
-    letter-spacing: .04em;
-  }
+  .index__count { font-style: normal; }
 </style>

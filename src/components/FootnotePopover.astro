@@ -1,0 +1,25 @@
+---
+/**
+ * FootnotePopover — inline expandable footnote for sourced claims
+ * Usage:
+ *   <FootnotePopover id="fn-1" ref="1">
+ *     <p>Source: <a href="...">Court Document, 2024</a></p>
+ *     <p class="footnote-popover__source">Court of Appeals, Case No. 23-1234</p>
+ *   </FootnotePopover>
+ *
+ * In markdown/content, reference with:
+ *   <a href="#fn-1" class="footnote-ref" id="fn-ref-1">[1]</a>
+ */
+interface Props {
+  id: string;           // unique id for the popover (matches ref href)
+  ref?: string;         // displayed reference number
+  children: any;        // footnote content
+}
+const { id, ref = '', children } = Astro.props;
+---
+<div id={id} class="footnote-popover" role="tooltip" aria-label={`Footnote ${ref}`}>
+  <button class="footnote-popover__close" aria-label="Close footnote">×</button>
+  <div class="footnote-popover__content">
+    <slot />
+  </div>
+</div>

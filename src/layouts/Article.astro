@@ -2,8 +2,10 @@
 import Base from './Base.astro';
 import ControversialBadge from '../components/ControversialBadge.astro';
 import Comments from '../components/Comments.astro';
-import { stamp, iso, readable, readingTime } from '../lib/format';
+import ArticleCard from '../components/ArticleCard.astro';
+import { stamp, iso, readable, readingTime, tagSlug } from '../lib/format';
 import { SITE } from '../config';
+import { getCollection } from 'astro:content';
 import type { CollectionEntry } from 'astro:content';
 
 interface Props { post: CollectionEntry<'articles'> }
@@ -13,6 +15,18 @@ const url = `/drops/${slug}`;
 const { Content } = await post.render();
 const rt = readingTime(body);
 const year = data.date.getUTCFullYear();
+
+// Get related posts by shared tags (max 3, excluding current)
+const allPosts = await getCollection('articles', (p) => !p.data.draft && p.slug !== slug);
+const relatedPosts = allPosts
+  .map(p => ({
+    post: p,
+    score: p.data.tags.filter(t => data.tags.includes(t)).length
+  }))
+  .filter(r => r.score > 0)
+  .sort((a, b) => b.score - a.score || b.post.data.date.valueOf() - a.post.data.date.valueOf())
+  .slice(0, 3)
+  .map(r => r.post);
 ---
 <Base title={data.title} description={data.description}>
   <article class="drop">
@@ -39,26 +53,44 @@ const year = data.date.getUTCFullYear();
       <ControversialBadge controversial={data.controversial} href={url} title={data.title} description={data.description} />
     </div>
 
-    <div class="prose drop__body reveal">
+    <div class="prose drop__body reveal" id="article-body">
       <Content />
+    </div>
 
-      <hr class="drop__end" />
-      <p class="drop__sign">
-        <span class="drop__sign-mark">—</span>
-        {SITE.author}, <em>{readable(data.date)}</em>
-      </p>
+    <!-- Related drops -->
+    {relatedPosts.length > 0 && (
+      <section class="shell drop__related reveal">
+        <h2 class="drop__related-title">Related drops</h2>
+        <div class="drop__related-grid">
+          {relatedPosts.map(p => <ArticleCard post={p} variant="card" />)}
+        </div>
+      </section>
+    )}
 
-      <div class="drop__cta">
-        <a href="/" class="btn">&larr; Return to current issue</a>
-        <a href="/rss.xml" class="btn btn--ghost">Subscribe via RSS</a>
-      </div>
+    <hr class="drop__end" />
+
+    <!-- Error reporting / correspondence -->
+    <p class="drop__correction">
+      <a href={`mailto:${SITE.email}?subject=Correction:%20${encodeURIComponent(data.title)}`}>
+        Spotted an error? Write to the editor
+      </a>
+    </p>
+
+    <p class="drop__sign">
+      <span class="drop__sign-mark">—</span>
+      {SITE.author}, <em>{readable(data.date)}</em>
+    </p>
+
+    <div class="drop__cta">
+      <a href="/" class="btn">&larr; Return to current issue</a>
+      <a href="/rss.xml" class="btn btn--ghost">Subscribe via RSS</a>
     </div>
 
     {data.tags.length > 0 && (
       <aside class="shell drop__tags">
-        <p class="drop__tags-label">Filed under</p>
+        <p class="drop__tags-label label">Filed under</p>
         <div class="drop__tags-list">
-          {data.tags.map(t => <a class="tag" href={`/tags/${t.toLowerCase().replace(/[^\w]+/g,'-').replace(/^-+|-+$/g,'')}`}>{t}</a>)}
+          {data.tags.map(t => <a class="tag" href={`/tags/${tagSlug(t)}`}>{t}</a>)}
         </div>
       </aside>
     )}
@@ -73,32 +105,32 @@ const year = data.date.getUTCFullYear();
   .drop__head { text-align: center; padding-block: clamp(3rem, 8vw, 6rem) 2rem; }
   .drop__kicker {
     font-family: var(--font-mono);
-    color: var(--text-faint);
+    color: var(--text-muted);
     font-size: .72rem;
     letter-spacing: .12em;
     text-transform: uppercase;
     margin-bottom: 2rem;
     display: flex; gap: .7em; justify-content: center; flex-wrap: wrap;
   }
-  .drop__kicker a { color: var(--text-dim); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 1px; transition: color .2s var(--ease), border-color .2s var(--ease); }
+  .drop__kicker a { color: var(--text-secondary); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 1px; transition: color var(--duration-fast) var(--ease-out-expo), border-color var(--duration-fast) var(--ease-out-expo); }
   .drop__kicker a:hover { color: var(--accent); border-color: var(--accent-soft); }
-  .drop__kicker-sep { color: var(--line-strong); }
+  .drop__kicker-sep { color: var(--rule-strong); }
 
   .drop__title {
-    font-size: clamp(2.4rem, 6.5vw, 4.5rem);
+    font-size: clamp(2.6rem, 6.5vw, 4.75rem);
     margin: 0 auto .35em;
-    max-width: 22ch;
-    font-weight: 400;
-    line-height: 1.05;
+    max-width: 24ch;
+    font-weight: 300;
+    line-height: 1.02;
     font-variation-settings: 'opsz' 144;
     font-style: italic;
   }
   .drop__sub {
     font-family: var(--font-display);
     font-style: italic;
-    font-size: clamp(1.1rem, 2.4vw, 1.4rem);
-    color: var(--text-dim);
-    max-width: 36ch;
+    font-size: clamp(1.15rem, 2.6vw, 1.5rem);
+    color: var(--text-secondary);
+    max-width: 40ch;
     margin: 0 auto;
     font-variation-settings: 'opsz' 48;
   }
@@ -108,43 +140,108 @@ const year = data.date.getUTCFullYear();
     display: inline-flex; gap: .55em; justify-content: center; flex-wrap: wrap;
     font-family: var(--font-mono);
     font-size: .72rem;
-    color: var(--text-faint);
+    color: var(--text-muted);
     letter-spacing: .04em;
   }
   .drop__head { display: flex; flex-direction: column; align-items: center; }
   .drop__meta { align-self: center; }
-  .drop__meta-sep { color: var(--line-strong); }
+  .drop__meta-sep { color: var(--rule-strong); }
 
   .drop__note-wrap { display: flex; justify-content: center; }
 
   .drop__body { padding-block: 2.5rem 1rem; }
-  .drop__end { margin-block: 3.5rem 1.5rem; border-top: 1px solid var(--line-fine); }
+
+  /* Pull-quote styling (for markdown blockquotes with class or direct usage) */
+  .drop__body .pull-quote,
+  .drop__body blockquote.pull-quote {
+    margin: 2.5em 0;
+    padding: .5em 0 .5em 2em;
+    border-left: 4px solid var(--accent);
+    font-family: var(--font-display);
+    font-style: italic;
+    font-weight: 300;
+    font-size: 1.35rem;
+    line-height: 1.45;
+    color: var(--text-primary);
+    font-variation-settings: 'opsz' 72;
+    max-width: var(--measure-narrow);
+  }
+  .drop__body .pull-quote--right,
+  .drop__body blockquote.pull-quote--right {
+    border-left: none;
+    border-right: 4px solid var(--accent);
+    padding-left: 0;
+    padding-right: 2em;
+    margin-left: auto;
+    text-align: right;
+  }
+
+  .drop__end { margin-block: 3.5rem 1.5rem; border-top: 1px solid var(--ink-3); }
+
+  .drop__related {
+    padding-block: 2rem 0;
+    border-top: 1px solid var(--ink-3);
+    margin-top: 1rem;
+  }
+  .drop__related-title {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.5rem;
+    margin: 0 0 1.5rem;
+    font-variation-settings: 'opsz' 48;
+  }
+  .drop__related-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .drop__correction {
+    margin: 0 0 1.5rem;
+    text-align: center;
+  }
+  .drop__correction a {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid transparent;
+    padding-bottom: 1px;
+    transition: color var(--duration-fast) var(--ease-out-expo), border-color var(--duration-fast) var(--ease-out-expo);
+  }
+  .drop__correction a:hover { color: var(--accent); border-color: var(--accent-soft); }
+
   .drop__sign {
     font-family: var(--font-display);
     font-style: normal;
-    color: var(--text-dim);
+    color: var(--text-secondary);
     font-size: 1rem;
     display: flex; align-items: baseline; gap: .6em;
     font-variation-settings: 'opsz' 36;
   }
-  .drop__sign em { font-style: italic; color: var(--text); }
+  .drop__sign em { font-style: italic; color: var(--text-primary); }
   .drop__sign-mark { color: var(--accent); }
   .drop__cta { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: 2rem; }
 
   .drop__tags {
     padding-block: 2.5rem;
-    border-top: 1px solid var(--line-fine);
-    border-bottom: 1px solid var(--line-fine);
+    border-top: 1px solid var(--ink-3);
+    border-bottom: 1px solid var(--ink-3);
     margin-top: 3rem;
     display: flex; align-items: baseline; gap: 1.5rem; flex-wrap: wrap;
   }
   .drop__tags-label {
     font-family: var(--font-mono);
     font-size: .72rem;
-    color: var(--text-faint);
+    color: var(--text-muted);
     letter-spacing: .12em;
     text-transform: uppercase;
     margin: 0;
   }
   .drop__tags-list { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  @media (max-width: 720px) {
+    .drop__related-grid { grid-template-columns: 1fr; }
+  }
 </style>

@@ -4,7 +4,7 @@ import { SITE } from '../config';
 ---
 <Base title="Colophon" description="The principles of this publication, and a brief account of the editor.">
   <section class="shell page-head">
-    <p class="page-head__eyebrow">A Note</p>
+    <p class="page-head__eyebrow label label--accent">A Note</p>
     <h1 class="page-head__title">On this publication.</h1>
   </section>
 
@@ -45,24 +45,16 @@ import { SITE } from '../config';
 
 <style>
   .page-head { padding-block: clamp(3rem, 8vw, 5rem) clamp(2rem, 4vw, 3rem); text-align: center; }
-  .page-head__eyebrow {
-    font-family: var(--font-mono);
-    font-size: .72rem;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 1.25rem;
-  }
   .page-head__title {
     font-style: italic;
     max-width: 18ch;
     margin: 0 auto;
     font-variation-settings: 'opsz' 144;
   }
-  .drop__end { margin-block: 3.5rem 1.5rem; border-top: 1px solid var(--line-fine); }
+  .drop__end { margin-block: 3.5rem 1.5rem; border-top: 1px solid var(--ink-3); }
   .drop__sign {
     font-family: var(--font-display);
-    color: var(--text-dim);
+    color: var(--text-secondary);
     font-size: 1rem;
     display: flex; align-items: baseline; gap: .6em;
     font-variation-settings: 'opsz' 36;

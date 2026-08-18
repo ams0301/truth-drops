@@ -24,7 +24,7 @@ const { tag, posts } = Astro.props;
 ---
 <Base title={`On ${tag}`} description={`All pieces concerning ${tag}.`}>
   <section class="shell page-head">
-    <p class="page-head__eyebrow">Subject</p>
+    <p class="page-head__eyebrow label label--accent">Subject</p>
     <h1 class="page-head__title">{tag}.</h1>
     <p class="page-head__desc">{posts.length} {posts.length === 1 ? 'issue' : 'issues'} on this subject.</p>
     <p class="page-head__back"><a href="/tags">← Return to the Subject Index</a></p>
@@ -39,17 +39,9 @@ const { tag, posts } = Astro.props;
 
 <style>
   .page-head { padding-block: clamp(3rem, 8vw, 5rem) clamp(2rem, 4vw, 3rem); text-align: center; }
-  .page-head__eyebrow {
-    font-family: var(--font-mono);
-    font-size: .72rem;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--accent);
-    margin: 0 0 1.25rem;
-  }
   .page-head__title { font-style: italic; margin: 0 auto .6em; font-variation-settings: 'opsz' 144; }
-  .page-head__desc { color: var(--text-dim); font-family: var(--font-display); font-style: italic; font-size: 1.05rem; font-variation-settings: 'opsz' 36; margin: 0 0 1.5rem; }
-  .page-head__back a { color: var(--text-dim); font-size: .88rem; }
+  .page-head__desc { color: var(--text-secondary); font-family: var(--font-display); font-style: italic; font-size: 1.05rem; font-variation-settings: 'opsz' 36; margin: 0 0 1.5rem; }
+  .page-head__back a { color: var(--text-secondary); font-size: .88rem; }
   .page-head__back a:hover { color: var(--accent); }
 
   .tag-grid-wrap { padding-bottom: 4rem; }

@@ -48,9 +48,9 @@ const featuredTags = allTags.slice(0, 8);
             <p class="label">{SITE.author}</p>
             <p class="label">{feature.data.tags.map(t => `#${t}`).join(' ')}</p>
           </div>
-          <!-- Broken Vessel on desktop -->
+          <!-- Broken Vessel on desktop + tablet -->
           <div class="feature__vessel">
-            <BrokenVessel size={160} static={true} />
+            <BrokenVessel size={200} static={true} />
             <p class="feature__vessel-label label">FILED</p>
           </div>
         </aside>
@@ -166,7 +166,7 @@ const featuredTags = allTags.slice(0, 8);
     gap: 3rem;
     align-items: start;
   }
-  @media (min-width: 1100px) {
+  @media (min-width: 900px) {
     .feature__grid {
       grid-template-columns: 1.4fr .6fr;
       grid-template-rows: auto auto;
@@ -195,14 +195,14 @@ const featuredTags = allTags.slice(0, 8);
   .feature__meta .label { margin: 0; }
   .feature__meta time { color: var(--text-secondary); }
 
-  /* Vessel in feature aside */
+  /* Vessel in feature aside - visible on tablet+ */
   .feature__vessel {
-    display: none;
+    display: block;
     margin-top: 2.5rem;
     text-align: center;
   }
-  @media (min-width: 1100px) {
-    .feature__vessel { display: block; }
+  @media (max-width: 600px) {
+    .feature__vessel { display: none; }
   }
   .feature__vessel-label {
     margin-top: .75rem;

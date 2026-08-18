@@ -1,8 +1,8 @@
 /**
  * Truth Drops — vanilla interaction layer
  * Scroll reveals, reading ribbon, sticky header shrink, footnote popovers,
- * editor note unfiling, Broken Vessel scroll fracture, Realistic Ink Drop page transitions.
- * No frameworks, ~6KB gzipped. Respects prefers-reduced-motion.
+ * editor note unfiling, Broken Vase scroll fracture.
+ * No frameworks, ~5KB gzipped. Respects prefers-reduced-motion.
  */
 
 (function () {
@@ -214,17 +214,18 @@
   }
 
   // ============================================================
-  // 6. Broken Vessel — Scroll-driven fracture (article pages)
+  // 6. Broken Vase — Scroll-driven fracture (article pages)
+  // 12-stage kintsugi fracture progression
   // ============================================================
-  function initBrokenVessel() {
+  function initBrokenVase() {
     if (prefersReduced) {
       document.querySelectorAll('.broken-vessel:not(.is-static)').forEach(vessel => {
         vessel.querySelectorAll('.crack-path').forEach(crack => {
           crack.style.strokeDashoffset = '0';
           crack.classList.add('active');
         });
-        vessel.querySelectorAll('.crack-path[data-stage="5"]').forEach(c => {
-          c.style.transform = 'translateX(-4px)';
+        vessel.querySelectorAll('.crack-path[data-stage="12"]').forEach(c => {
+          c.style.transform = 'translateX(-3px)';
           c.style.transformOrigin = 'center';
         });
       });
@@ -234,13 +235,20 @@
     const vessels = document.querySelectorAll('.broken-vessel:not(.is-static)');
     if (!vessels.length) return;
 
-    // Crack stages in order of appearance
+    // 12 crack stages in order of appearance — kintsugi progression
     const stages = [
-      { selector: '.crack-path[data-stage="1"]', threshold: 0.0 },      // Hairline - visible from start
-      { selector: '.crack-path[data-stage="2"]', threshold: 0.18 },     // Right branch
-      { selector: '.crack-path[data-stage="3"]', threshold: 0.18 },     // Left branch
-      { selector: '.crack-path[data-stage="4"]', threshold: 0.32 },     // Chip at rim
-      { selector: '.crack-path[data-stage="5"]', threshold: 0.48 },     // Main fracture
+      { selector: '.crack-path[data-stage="1"]',  threshold: 0.00 },  // Neck crack - immediate
+      { selector: '.crack-path[data-stage="2"]',  threshold: 0.08 },  // Right shoulder branch
+      { selector: '.crack-path[data-stage="3"]',  threshold: 0.08 },  // Left shoulder branch
+      { selector: '.crack-path[data-stage="4"]',  threshold: 0.18 },  // Right shoulder chip
+      { selector: '.crack-path[data-stage="5"]',  threshold: 0.18 },  // Left shoulder chip
+      { selector: '.crack-path[data-stage="6"]',  threshold: 0.30 },  // Right body fracture
+      { selector: '.crack-path[data-stage="7"]',  threshold: 0.30 },  // Left body fracture
+      { selector: '.crack-path[data-stage="8"]',  threshold: 0.48 },  // Lower right fracture
+      { selector: '.crack-path[data-stage="9"]',  threshold: 0.48 },  // Lower left fracture
+      { selector: '.crack-path[data-stage="10"]', threshold: 0.65 },  // Right foot crack
+      { selector: '.crack-path[data-stage="11"]', threshold: 0.65 },  // Left foot crack
+      { selector: '.crack-path[data-stage="12"]', threshold: 0.82 },  // Base center split (final)
     ];
 
     let ticking = false;
@@ -248,7 +256,7 @@
     function update() {
       const article = document.querySelector('.drop__body') || document.querySelector('main article');
       if (!article) {
-        // On homepage (static vessel), show hairline crack
+        // On homepage (static vessel), show first few cracks
         vessels.forEach(vessel => {
           const crack = vessel.querySelector('.crack-path[data-stage="1"]');
           if (crack) {
@@ -279,16 +287,16 @@
             crack.classList.remove('active');
           }
 
-          // Add split transform for final fracture when near end
-          if (selector.includes('data-stage="5"') && progress >= 0.85) {
-            crack.style.transform = 'translateX(-4px)';
+          // Add slight separation for final base split when near end
+          if (selector.includes('data-stage="12"') && progress >= 0.88) {
+            crack.style.transform = 'translateX(-3px)';
             crack.style.transformOrigin = 'center';
           }
 
-          // Flash accent on final crack at sign-off (near end of article)
-          if (selector.includes('data-stage="5"') && progress >= 0.95) {
+          // Golden flash on final split at sign-off (near end of article)
+          if (selector.includes('data-stage="12"') && progress >= 0.95) {
             crack.classList.add('final-flash');
-            setTimeout(() => crack.classList.remove('final-flash'), 1200);
+            setTimeout(() => crack.classList.remove('final-flash'), 1500);
           }
         });
       });
@@ -309,146 +317,76 @@
   }
 
   // ============================================================
-  // 7. Realistic Ink Drop Page Transition
+  // 5. Smooth scroll offset for anchor links
   // ============================================================
-  function initInkDropTransition() {
-    if (prefersReduced) return;
-    if (!document.startViewTransition) return;
-
-    const transitionOverlay = document.getElementById('ink-drop-transition');
-    if (!transitionOverlay) return;
-
-    let isTransitioning = false;
-
-    // Timing matching the new realistic CSS animations
-    const CORE_DURATION = 1400;
-    const OUTER_DURATION = 1600;
-    const TENDRIL_DURATION = 1800;
-    const PARTICLE_DURATION = 2000;
-    const REVEAL_DELAY = 500;
-    const TOTAL_DURATION = 2400;
-
-    function playTransition(href, clickX, clickY) {
-      if (isTransitioning) return;
-      isTransitioning = true;
-
-      // Position SVG at click point
-      const x = clickX ?? window.innerWidth / 2;
-      const y = clickY ?? window.innerHeight / 2;
-      const svg = transitionOverlay.querySelector('.ink-drop-svg');
-      if (svg) svg.style.transformOrigin = `${x}px ${y}px`;
-
-      transitionOverlay.hidden = false;
-      transitionOverlay.classList.add('playing');
-
-      // Start reveal mask after core settles
-      setTimeout(() => {
-        transitionOverlay.classList.add('revealing');
-        transitionOverlay.classList.remove('playing');
-      }, REVEAL_DELAY + 100);
-
-      // Start view transition after reveal begins
-      setTimeout(() => {
-        document.startViewTransition(() => {
-          window.location.href = href;
-        });
-      }, REVEAL_DELAY + 200);
-
-      // Cleanup
-      setTimeout(() => {
-        transitionOverlay.classList.remove('revealing');
-        transitionOverlay.hidden = true;
-        isTransitioning = false;
-      }, TOTAL_DURATION);
-    }
+  function initAnchorOffset() {
+    const header = document.querySelector('.site-header');
+    if (!header) return;
 
     document.addEventListener('click', (e) => {
-      const link = e.target.closest('a[href]');
-      if (!link) return;
+      const anchor = e.target.closest('a[href^="#"]');
+      if (!anchor) return;
 
-      const href = link.getAttribute('href');
-      if (!href) return;
+      const targetId = anchor.getAttribute('href').slice(1);
+      if (!targetId) return;
 
-      // Only transition for internal navigation
-      const isInternal = href.startsWith('/drops/') || href === '/' || href.startsWith('/tags/') || href.startsWith('/archive');
-      const isSameOrigin = link.origin === window.location.origin;
-      if (!isInternal || !isSameOrigin) return;
+      const target = document.getElementById(targetId);
+      if (!target) return;
 
-      // Skip if modifier keys pressed
-      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
-
-      // Prevent default navigation
       e.preventDefault();
-
-      // Get click position for drop origin
-      const clickX = e.clientX;
-      const clickY = e.clientY;
-
-      playTransition(href, clickX, clickY);
+      const headerHeight = header.offsetHeight;
+      const targetTop = target.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: targetTop - headerHeight - 16, behavior: 'smooth' });
+      target.focus({ preventScroll: true });
     });
   }
 
   // ============================================================
-  // 8. Homepage Vessel Easter Egg — click to crack + realistic drop
+  // 7. Homepage Vase Easter Egg — click to fully crack
   // ============================================================
-  function initVesselEasterEgg() {
+  function initVaseEasterEgg() {
     if (prefersReduced) return;
 
-    const homeVessel = document.querySelector('.feature__vessel .broken-vessel.is-static');
-    if (!homeVessel) return;
+    const homeVase = document.querySelector('.feature__vessel .broken-vessel.is-static');
+    if (!homeVase) return;
 
     let cracked = false;
 
-    homeVessel.addEventListener('click', () => {
+    homeVase.addEventListener('click', () => {
       if (cracked) return;
       cracked = true;
 
-      // Animate all cracks sequentially
-      const allCracks = homeVessel.querySelectorAll('.crack-path');
+      // Animate all 12 cracks sequentially
+      const allCracks = homeVase.querySelectorAll('.crack-path');
       allCracks.forEach((crack, i) => {
         setTimeout(() => {
           crack.style.strokeDashoffset = '0';
           crack.classList.add('active');
-        }, i * 220);
+        }, i * 180);
       });
 
-      // Split pieces
+      // Final base split
       setTimeout(() => {
-        const mainCrack = homeVessel.querySelector('.crack-path[data-stage="5"]');
+        const mainCrack = homeVase.querySelector('.crack-path[data-stage="12"]');
         if (mainCrack) {
-          mainCrack.style.transform = 'translateX(-4px)';
+          mainCrack.style.transform = 'translateX(-3px)';
           mainCrack.style.transformOrigin = 'center';
         }
-      }, 1000);
+      }, 2200);
 
-      // Spawn realistic ink drop
+      // Brief golden flash
       setTimeout(() => {
-        const rect = homeVessel.getBoundingClientRect();
-        spawnRealisticInkDrop(rect.left + rect.width / 2, rect.top + rect.height / 2);
-      }, 1100);
+        const mainCrack = homeVase.querySelector('.crack-path[data-stage="12"]');
+        if (mainCrack) {
+          mainCrack.classList.add('final-flash');
+          setTimeout(() => mainCrack.classList.remove('final-flash'), 2000);
+        }
+      }, 2400);
     });
   }
 
-  function spawnRealisticInkDrop(x, y) {
-    const overlay = document.getElementById('ink-drop-transition');
-    if (!overlay) return;
-
-    const svg = overlay.querySelector('.ink-drop-svg');
-    overlay.hidden = false;
-    if (svg) svg.style.transformOrigin = `${x}px ${y}px`;
-
-    // Trigger all animations
-    overlay.classList.add('playing');
-
-    // Cleanup
-    setTimeout(() => {
-      overlay.classList.remove('playing');
-      overlay.hidden = true;
-    }, 2400);
-  }
-
   // ============================================================
-  // 9. Custom cursor for article body (text caret feel)
+  // 8. Custom cursor for article body (text caret feel)
   // ============================================================
   function initCustomCursor() {
     if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -473,9 +411,8 @@
     initHeaderShrink();
     initFootnotes();
     initAnchorOffset();
-    initBrokenVessel();
-    initInkDropTransition();
-    initVesselEasterEgg();
+    initBrokenVase();
+    initVaseEasterEgg();
     initCustomCursor();
   }
 

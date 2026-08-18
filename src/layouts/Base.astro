@@ -1,7 +1,7 @@
 ---
 import { SITE } from '../config';
 import '../styles/global.css';
-import InkDropTransition from '../components/InkDropTransition.astro';
+import BrokenVessel from '../components/BrokenVessel.astro';
 
 const { pathname } = Astro.url;
 const year = new Date().getFullYear();
@@ -60,12 +60,13 @@ const issueNum = `№ ${issueDate}`;
       <div class="reading-ribbon__fill"></div>
     </div>
 
-    <!-- Ink Drop page transition overlay -->
-    <InkDropTransition />
-
     <header class="site-header">
       <div class="shell site-header__inner">
         <a href="/" class="brand" aria-label={SITE.name}>
+          <!-- Small broken flower vase in header -->
+          <span class="brand__vase" aria-hidden="true">
+            <BrokenVessel size={36} static={true} />
+          </span>
           <span class="brand__name">{SITE.name}</span>
           <span class="brand__cursor" aria-hidden="true">|</span>
         </a>
@@ -163,9 +164,9 @@ const issueNum = `№ ${issueDate}`;
         transform-origin: bottom;
       }
 
-      /* Brand with typewriter cursor */
+      /* Brand with vase and typewriter cursor */
       .brand {
-        display: inline-flex; align-items: baseline; gap: .15em;
+        display: inline-flex; align-items: center; gap: .5em;
         font-family: var(--font-display);
         font-weight: 400;
         font-size: 1.35rem;
@@ -175,6 +176,17 @@ const issueNum = `№ ${issueDate}`;
         font-variation-settings: 'opsz' 48;
         transition: color var(--duration-fast) var(--ease-out-expo),
                     font-size var(--duration-base) var(--ease-out-expo);
+      }
+      .brand__vase {
+        display: inline-flex;
+        flex-shrink: 0;
+        opacity: 0.85;
+      }
+      .brand__vase svg {
+        display: block;
+      }
+      .brand__name {
+        line-height: 1;
       }
       .brand__cursor {
         display: inline-block;
@@ -193,6 +205,7 @@ const issueNum = `№ ${issueDate}`;
       .brand:hover { color: var(--accent); text-decoration: none; }
       .brand:hover .brand__cursor { animation: none; opacity: 1; color: var(--accent); }
       .site-header.is-shrunk .brand { font-size: 1.15rem; }
+      .site-header.is-shrunk .brand__vase { opacity: 0.7; }
 
       .site-header {
         position: sticky; top: 0; z-index: 50;

@@ -1,7 +1,8 @@
 ---
 /**
- * BrokenVessel — elegant etching-style vessel with scroll-driven fracture animation
- * Designed as a signature visual motif: refined, aesthetic, matches the editorial vibe
+ * BrokenVessel — elegant broken ceramic flower vase
+ * Signature motif: refined porcelain vase with kintsugi-inspired gold cracks
+ * Represents beauty in brokenness, truth through fracture
  */
 interface Props {
   static?: boolean;
@@ -10,51 +11,56 @@ interface Props {
 }
 const { static: isStatic = false, size = 220, class: klass = '' } = Astro.props;
 const h = size;
-const w = size * 0.52;
-const hw = w * 0.5;
-const neckY = h * 0.04;
-const shoulderY = h * 0.085;
-const upperY = h * 0.15;
-const midY = h * 0.23;
-const lowerY = h * 0.32;
-const rimY = h * 0.38;
-const chipY = h * 0.43;
-const baseY = h * 0.76;
-const bottomY = h * 0.93;
-const rightX = w * 0.86;
-const rightInnerX = w * 0.8;
-const leftX = w * 0.14;
-const leftInnerX = w * 0.36;
-const centerX = hw;
-const rightCurveX = w * 0.9;
-const leftCurveX = w * 0.1;
-const upperCurveX = w * 0.72;
-const lowerCurveX = w * 0.28;
-const fractureStartX = w * 0.26;
-const fractureMidX = w * 0.36;
-const fractureCenterX = hw;
-const fractureUpperX = w * 0.64;
-const fractureTopX = hw + w * 0.02;
+const w = size * 0.42; // More slender, vase-like proportion
 
-// Pre-compute all path data as strings for clean interpolation
-const vesselOutline = `M ${hw} ${neckY} 
-  Q ${w * 0.88} ${shoulderY} ${w * 0.92} ${h * 0.3}
-  Q ${w * 0.96} ${h * 0.55} ${upperCurveX} ${h * 0.75}
-  Q ${hw} ${bottomY} ${lowerCurveX} ${h * 0.75}
-  Q ${w * 0.04} ${h * 0.55} ${w * 0.08} ${h * 0.3}
-  Q ${w * 0.12} ${shoulderY} ${hw} ${neckY} Z`;
+// Vase geometry - elegant ceramic vase proportions
+const neckTop = h * 0.03;
+const neckBottom = h * 0.11;
+const shoulderTop = h * 0.11;
+const shoulderBottom = h * 0.18;
+const bodyMax = h * 0.38; // Widest point
+const bodyBottom = h * 0.72;
+const footTop = h * 0.72;
+const footBottom = h * 0.82;
+const baseBottom = h * 0.97;
 
-const crack1 = `M ${hw} ${h * 0.085}
-  Q ${hw + w * 0.025} ${h * 0.16} ${hw - w * 0.025} ${h * 0.28}`;
-const crack2 = `M ${hw} ${h * 0.14}
-  Q ${hw + w * 0.09} ${h * 0.21} ${hw + w * 0.15} ${h * 0.32}`;
-const crack3 = `M ${hw} ${h * 0.14}
-  Q ${hw - w * 0.09} ${h * 0.21} ${hw - w * 0.15} ${h * 0.32}`;
-const crack4 = `M ${rightX} ${lowerY}
-  Q ${rightInnerX} ${chipY} ${rightX} ${rimY}`;
-const crack5 = `M ${fractureStartX} ${baseY}
-  Q ${fractureMidX} ${h * 0.58} ${fractureCenterX} ${h * 0.34}
-  Q ${fractureUpperX} ${h * 0.16} ${fractureTopX} ${h * 0.075}`;
+const centerX = w * 0.5;
+const neckR = w * 0.18;
+const shoulderR = w * 0.42;
+const bodyR = w * 0.5; // Max width
+const footR = w * 0.28;
+const baseR = w * 0.16;
+
+// Pre-computed path strings
+const vaseOutline = `
+  M ${w * 0.5} ${neckTop}
+  L ${w * 0.5 + neckR} ${neckBottom}
+  Q ${w * 0.5 + shoulderR} ${shoulderTop} ${w * 0.5 + shoulderR} ${shoulderBottom}
+  Q ${w * 0.5 + bodyR} ${bodyMax} ${w * 0.5 + bodyR} ${h * 0.5}
+  Q ${w * 0.5 + bodyR} ${bodyBottom} ${w * 0.5 + footR} ${footTop}
+  Q ${w * 0.5 + baseR} ${footBottom} ${w * 0.5 + baseR} ${baseBottom}
+  L ${w * 0.5 - baseR} ${baseBottom}
+  Q ${w * 0.5 - baseR} ${footBottom} ${w * 0.5 - footR} ${footTop}
+  L ${w * 0.5 - bodyR} ${bodyBottom}
+  Q ${w * 0.5 - bodyR} ${h * 0.5} ${w * 0.5 - bodyR} ${bodyMax}
+  Q ${w * 0.5 - shoulderR} ${shoulderBottom} ${w * 0.5 - shoulderR} ${shoulderTop}
+  L ${w * 0.5 - neckR} ${neckBottom}
+  Z
+`.trim().replace(/\s+/g, ' ');
+
+// Crack paths - elegant kintsugi-style fractures
+const crack1 = `M ${w * 0.5} ${neckBottom} Q ${w * 0.5 + w * 0.02} ${h * 0.14} ${w * 0.5 + w * 0.01} ${h * 0.22}`;
+const crack2 = `M ${w * 0.5} ${h * 0.13} Q ${w * 0.5 + w * 0.12} ${h * 0.2} ${w * 0.5 + w * 0.2} ${h * 0.28}`;
+const crack3 = `M ${w * 0.5} ${h * 0.13} Q ${w * 0.5 - w * 0.12} ${h * 0.2} ${w * 0.5 - w * 0.2} ${h * 0.28}`;
+const crack4 = `M ${w * 0.5 + shoulderR * 0.9} ${h * 0.18} Q ${w * 0.5 + shoulderR * 0.7} ${h * 0.22} ${w * 0.5 + shoulderR * 0.9} ${h * 0.26}`;
+const crack5 = `M ${w * 0.5 - shoulderR * 0.9} ${h * 0.18} Q ${w * 0.5 - shoulderR * 0.7} ${h * 0.22} ${w * 0.5 - shoulderR * 0.9} ${h * 0.26}`;
+const crack6 = `M ${w * 0.5 + w * 0.15} ${h * 0.4} Q ${w * 0.5 + w * 0.25} ${h * 0.48} ${w * 0.5 + w * 0.18} ${h * 0.58}`;
+const crack7 = `M ${w * 0.5 - w * 0.15} ${h * 0.4} Q ${w * 0.5 - w * 0.25} ${h * 0.48} ${w * 0.5 - w * 0.18} ${h * 0.58}`;
+const crack8 = `M ${w * 0.5} ${h * 0.55} Q ${w * 0.5 + w * 0.08} ${h * 0.62} ${w * 0.5 + w * 0.02} ${h * 0.7}`;
+const crack9 = `M ${w * 0.5} ${h * 0.55} Q ${w * 0.5 - w * 0.08} ${h * 0.62} ${w * 0.5 - w * 0.02} ${h * 0.7}`;
+const crack10 = `M ${w * 0.5 + footR * 0.6} ${footTop} Q ${w * 0.5 + footR * 0.4} ${h * 0.77} ${w * 0.5 + footR * 0.6} ${h * 0.83}`;
+const crack11 = `M ${w * 0.5 - footR * 0.6} ${footTop} Q ${w * 0.5 - footR * 0.4} ${h * 0.77} ${w * 0.5 - footR * 0.6} ${h * 0.83}`;
+const crack12 = `M ${w * 0.5} ${h * 0.85} Q ${w * 0.5 + w * 0.06} ${h * 0.91} ${w * 0.5} ${baseBottom}`;
 ---
 <svg
   class:list={['broken-vessel', klass, { 'is-static': isStatic }]}
@@ -64,116 +70,166 @@ const crack5 = `M ${fractureStartX} ${baseY}
   aria-hidden="true"
   preserveAspectRatio="xMidYMid meet"
   role="img"
-  aria-label="Broken vessel motif — a fractured etching representing truth breaking through illusion"
+  aria-label="Broken ceramic flower vase with kintsugi gold repair — beauty in imperfection"
 >
   <defs>
     <style>
-      /* Vessel outline — warm etching line with subtle glow */
-      .vessel-outline {
-        stroke: var(--vessel-stroke, #C9B896);
-        stroke-width: 1.8;
+      /* Vase outline — warm ceramic tone with subtle glow */
+      .vase-outline {
+        stroke: var(--vase-stroke, #B8A07E);
+        stroke-width: 1.6;
         fill: none;
         stroke-linecap: round;
         stroke-linejoin: round;
-        opacity: 0.9;
-        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+        opacity: 0.92;
+        filter: drop-shadow(0 1px 2px rgba(0,0,0,0.35));
         transition: stroke 0.5s var(--ease-out-expo), opacity 0.5s var(--ease-out-expo);
       }
 
-      /* Crack paths — gold/accent, drawn on via stroke-dashoffset */
+      /* Subtle ceramic body fill */
+      .vase-body {
+        fill: var(--vase-fill, #1A1815);
+        opacity: 0.6;
+        filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+      }
+
+      /* Crack paths — kintsugi gold repair */
       .crack-path {
-        stroke: var(--vessel-crack, #D4A843);
-        stroke-width: 1.4;
+        stroke: var(--vase-crack, #C9A84C);
+        stroke-width: 1.3;
         fill: none;
         stroke-linecap: round;
         stroke-linejoin: round;
         opacity: 0;
         transition: stroke 0.5s var(--ease-out-expo),
-                    stroke-dashoffset 1.1s cubic-bezier(0.22, 0.61, 0.36, 1),
+                    stroke-dashoffset 1.2s cubic-bezier(0.22, 0.61, 0.36, 1),
                     opacity 0.4s var(--ease-out-expo),
                     transform 0.7s var(--ease-out-expo);
         transform-origin: center;
-        filter: drop-shadow(0 0 1px var(--vessel-crack));
+        filter: drop-shadow(0 0 1.5px var(--vase-crack));
       }
-      .crack-path[data-stage="1"] { stroke-dasharray: 58; stroke-dashoffset: 58; }
-      .crack-path[data-stage="2"] { stroke-dasharray: 42; stroke-dashoffset: 42; }
-      .crack-path[data-stage="3"] { stroke-dasharray: 40; stroke-dashoffset: 40; }
-      .crack-path[data-stage="4"] { stroke-dasharray: 28; stroke-dashoffset: 28; }
-      .crack-path[data-stage="5"] { stroke-dasharray: 72; stroke-dashoffset: 72; }
+
+      /* Staggered crack reveal stages */
+      .crack-path[data-stage="1"]  { stroke-dasharray: 48;  stroke-dashoffset: 48;  }  /* Neck crack */
+      .crack-path[data-stage="2"]  { stroke-dasharray: 52;  stroke-dashoffset: 52;  }  /* Right shoulder branch */
+      .crack-path[data-stage="3"]  { stroke-dasharray: 50;  stroke-dashoffset: 50;  }  /* Left shoulder branch */
+      .crack-path[data-stage="4"]  { stroke-dasharray: 38;  stroke-dashoffset: 38;  }  /* Right shoulder chip */
+      .crack-path[data-stage="5"]  { stroke-dasharray: 36;  stroke-dashoffset: 36;  }  /* Left shoulder chip */
+      .crack-path[data-stage="6"]  { stroke-dasharray: 55;  stroke-dashoffset: 55;  }  /* Right body fracture */
+      .crack-path[data-stage="7"]  { stroke-dasharray: 53;  stroke-dashoffset: 53;  }  /* Left body fracture */
+      .crack-path[data-stage="8"]  { stroke-dasharray: 60;  stroke-dashoffset: 60;  }  /* Lower right fracture */
+      .crack-path[data-stage="9"]  { stroke-dasharray: 58;  stroke-dashoffset: 58;  }  /* Lower left fracture */
+      .crack-path[data-stage="10"] { stroke-dasharray: 42;  stroke-dashoffset: 42;  }  /* Right foot crack */
+      .crack-path[data-stage="11"] { stroke-dasharray: 40;  stroke-dashoffset: 40;  }  /* Left foot crack */
+      .crack-path[data-stage="12"] { stroke-dasharray: 52;  stroke-dashoffset: 52;  }  /* Base center split */
+
       .crack-path.active { stroke-dashoffset: 0; opacity: 1; }
-      .crack-path.final-flash { 
-        stroke: var(--vessel-flash, #F0C850); 
-        opacity: 1; 
-        filter: drop-shadow(0 0 4px var(--vessel-flash)) drop-shadow(0 0 8px var(--vessel-flash));
+      .crack-path.final-flash {
+        stroke: var(--vase-flash, #E8C56D);
+        opacity: 1;
+        filter: drop-shadow(0 0 4px var(--vase-flash)) drop-shadow(0 0 8px var(--vase-flash));
       }
 
-      /* Static state (homepage) — show hairline + main fracture */
-      .broken-vessel.is-static .crack-path { 
-        stroke-dashoffset: 0; 
-        opacity: 0.55; 
+      /* Static state (homepage/header) — show first few cracks */
+      .broken-vessel.is-static .crack-path {
+        stroke-dashoffset: 0;
+        opacity: 0.5;
       }
-      .broken-vessel.is-static .crack-path[data-stage="1"] { opacity: 1; }
-      .broken-vessel.is-static .crack-path[data-stage="5"] { 
-        transform: translateX(-5px); 
-        opacity: 0.85; 
-      }
+      .broken-vessel.is-static .crack-path[data-stage="1"]  { opacity: 1; }
+      .broken-vessel.is-static .crack-path[data-stage="2"]  { opacity: 0.7; }
+      .broken-vessel.is-static .crack-path[data-stage="3"]  { opacity: 0.7; }
+      .broken-vessel.is-static .crack-path[data-stage="12"] { opacity: 0.6; transform: translateX(-2px); }
 
-      /* Reduced motion: show final fractured state */
+      /* Reduced motion: show final state */
       @media (prefers-reduced-motion: reduce) {
-        .broken-vessel:not(.is-static) .crack-path { 
-          stroke-dashoffset: 0; 
-          opacity: 1; 
+        .broken-vessel:not(.is-static) .crack-path {
+          stroke-dashoffset: 0;
+          opacity: 1;
         }
-        .broken-vessel:not(.is-static) .crack-path[data-stage="5"] { 
-          transform: translateX(-5px); 
+        .broken-vessel:not(.is-static) .crack-path[data-stage="12"] {
+          transform: translateX(-3px);
         }
       }
 
-      /* Subtle ambient shimmer on the vessel outline */
-      @keyframes vessel-shimmer {
-        0%, 100% { opacity: 0.9; }
+      /* Subtle ambient shimmer on outline */
+      @keyframes vase-shimmer {
+        0%, 100% { opacity: 0.92; }
         50% { opacity: 1; }
       }
-      .broken-vessel:not(.is-static) .vessel-outline {
-        animation: vessel-shimmer 8s ease-in-out infinite;
+      .broken-vessel:not(.is-static) .vase-outline {
+        animation: vase-shimmer 10s ease-in-out infinite;
+      }
+
+      /* Subtle glow behind vase */
+      .vase-glow {
+        animation: glow-pulse 6s ease-in-out infinite;
+      }
+      @keyframes glow-pulse {
+        0%, 100% { opacity: 0.025; }
+        50% { opacity: 0.045; }
       }
     </style>
 
-    <!-- CSS custom properties for theming -->
+    <!-- CSS custom properties -->
     <style>
       :host {
-        --vessel-stroke: #C9B896;
-        --vessel-crack: #D4A843;
-        --vessel-flash: #F0C850;
+        --vase-stroke: #B8A07E;
+        --vase-fill: #1A1815;
+        --vase-crack: #C9A84C;
+        --vase-flash: #E8C56D;
       }
     </style>
   </defs>
 
-  <!-- Subtle background glow behind vessel -->
-  <ellipse 
-    cx={hw} cy={h * 0.52} 
-    rx={w * 0.48} ry={h * 0.42} 
-    fill="var(--vessel-crack)" 
-    fill-opacity="0.03" 
-    filter="blur(8px)"
-    class="vessel-glow"
+  <!-- Subtle glow behind vase -->
+  <ellipse
+    class="vase-glow"
+    cx={w * 0.5} cy={h * 0.52}
+    rx={w * 0.42} ry={h * 0.4}
+    fill="var(--vase-crack)"
+    fill-opacity="0.025"
+    filter="blur(10px)"
   />
 
-  <!-- Vessel outline — elegant etching with warm gold tone -->
-  <path class="vessel-outline" d={vesselOutline} />
+  <!-- Vase body fill -->
+  <path class="vase-body" d={vaseOutline} />
 
-  <!-- Stage 1: Hairline crack at neck (always visible on article pages) -->
+  <!-- Vase outline — elegant ceramic silhouette -->
+  <path class="vase-outline" d={vaseOutline} />
+
+  <!-- Stage 1: Neck crack (always visible) -->
   <path class="crack-path" data-stage="1" d={crack1} />
 
-  <!-- Stage 2: Right branch from hairline -->
+  <!-- Stage 2: Right shoulder branch -->
   <path class="crack-path" data-stage="2" d={crack2} />
 
-  <!-- Stage 3: Left branch from hairline -->
+  <!-- Stage 3: Left shoulder branch -->
   <path class="crack-path" data-stage="3" d={crack3} />
 
-  <!-- Stage 4: Chip at right rim -->
+  <!-- Stage 4: Right shoulder chip -->
   <path class="crack-path" data-stage="4" d={crack4} />
 
-  <!-- Stage 5: Main fracture line — splits the vessel -->
+  <!-- Stage 5: Left shoulder chip -->
   <path class="crack-path" data-stage="5" d={crack5} />
+
+  <!-- Stage 6: Right body fracture -->
+  <path class="crack-path" data-stage="6" d={crack6} />
+
+  <!-- Stage 7: Left body fracture -->
+  <path class="crack-path" data-stage="7" d={crack7} />
+
+  <!-- Stage 8: Lower right fracture -->
+  <path class="crack-path" data-stage="8" d={crack8} />
+
+  <!-- Stage 9: Lower left fracture -->
+  <path class="crack-path" data-stage="9" d={crack9} />
+
+  <!-- Stage 10: Right foot crack -->
+  <path class="crack-path" data-stage="10" d={crack10} />
+
+  <!-- Stage 11: Left foot crack -->
+  <path class="crack-path" data-stage="11" d={crack11} />
+
+  <!-- Stage 12: Base center split (final) -->
+  <path class="crack-path" data-stage="12" d={crack12} />
 </svg>

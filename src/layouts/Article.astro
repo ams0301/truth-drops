@@ -27,9 +27,12 @@ const relatedPosts = allPosts
   .sort((a, b) => b.score - a.score || b.post.data.date.valueOf() - a.post.data.date.valueOf())
   .slice(0, 3)
   .map(r => r.post);
+
+// Primary tag for color coding
+const primaryTag = data.tags[0]?.toLowerCase().replace(/[^\w]+/g, '-') ?? '';
 ---
 <Base title={data.title} description={data.description}>
-  <article class="drop">
+  <article class="drop" data-tag={primaryTag}>
     <header class="drop__head shell">
       <p class="drop__kicker reveal">
         <a href="/archive">The Archive</a>
@@ -50,14 +53,13 @@ const relatedPosts = allPosts
     </header>
 
     <div class="shell drop__note-wrap">
-      <ControversialBadge controversial={data.controversial} href={url} title={data.title} description={data.description} />
+      <ControversialBadge controversial={data.controversial} href={url} title={data.title} description={data.description} tag={primaryTag} />
     </div>
 
     <div class="prose drop__body reveal" id="article-body">
       <Content />
     </div>
 
-    <!-- Related drops -->
     {relatedPosts.length > 0 && (
       <section class="shell drop__related reveal">
         <h2 class="drop__related-title">Related drops</h2>
@@ -69,7 +71,6 @@ const relatedPosts = allPosts
 
     <hr class="drop__end" />
 
-    <!-- Error reporting / correspondence -->
     <p class="drop__correction">
       <a href={`mailto:${SITE.email}?subject=Correction:%20${encodeURIComponent(data.title)}`}>
         Spotted an error? Write to the editor
@@ -90,7 +91,7 @@ const relatedPosts = allPosts
       <aside class="shell drop__tags">
         <p class="drop__tags-label label">Filed under</p>
         <div class="drop__tags-list">
-          {data.tags.map(t => <a class="tag" href={`/tags/${tagSlug(t)}`}>{t}</a>)}
+          {data.tags.map(t => <a class="tag" href={`/tags/${tagSlug(t)}`} data-tag={tagSlug(t)}>{t}</a>)}
         </div>
       </aside>
     )}
@@ -151,7 +152,7 @@ const relatedPosts = allPosts
 
   .drop__body { padding-block: 2.5rem 1rem; }
 
-  /* Pull-quote styling (for markdown blockquotes with class or direct usage) */
+  /* Pull-quote styling */
   .drop__body .pull-quote,
   .drop__body blockquote.pull-quote {
     margin: 2.5em 0;
@@ -174,6 +175,48 @@ const relatedPosts = allPosts
     padding-right: 2em;
     margin-left: auto;
     text-align: right;
+  }
+
+  /* Margin note — floats in margin on wide viewports */
+  .drop__body .margin-note {
+    margin: 1.5em 0;
+    padding: .75em 1rem;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: .9rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    font-variation-settings: 'opsz' 32;
+    border-left: 2px solid var(--accent);
+    background: var(--accent-pale);
+    border-radius: 0 var(--radius) var(--radius) 0;
+  }
+  .drop__body .margin-note::before {
+    content: '';
+    position: absolute;
+    left: -8px; top: 50%;
+    width: 6px; height: 1px;
+    background: var(--accent);
+    transform: translateY(-50%);
+  }
+  @media (min-width: 1400px) {
+    .drop__body .margin-note {
+      position: absolute;
+      right: calc(var(--pad-x) + 100%);
+      width: 220px;
+      margin-right: 2rem;
+      left: auto;
+      border-left: none;
+      border-bottom: 2px solid var(--accent);
+      border-radius: var(--radius) var(--radius) 0 0;
+      background: transparent;
+    }
+    .drop__body .margin-note::before {
+      left: auto; right: -10px; top: auto; bottom: -2px;
+      width: 1px; height: 8px;
+      transform: none;
+      background: var(--accent);
+    }
   }
 
   .drop__end { margin-block: 3.5rem 1.5rem; border-top: 1px solid var(--ink-3); }
@@ -240,6 +283,40 @@ const relatedPosts = allPosts
     margin: 0;
   }
   .drop__tags-list { display: flex; gap: 1rem; flex-wrap: wrap; }
+
+  /* Editor note unfiling animation */
+  .editor-note {
+    opacity: 0;
+    transform: rotate(-3deg) translateY(-20px) scale(.98);
+    transition: opacity var(--duration-slow) var(--ease-out-expo),
+                transform var(--duration-slow) var(--ease-out-expo);
+    will-change: opacity, transform;
+  }
+  .editor-note.is-visible {
+    opacity: 1;
+    transform: rotate(0deg) translateY(0) scale(1);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .editor-note { opacity: 1; transform: none; transition: none; }
+  }
+
+  /* Per-tag tint on article */
+  .drop[data-tag="law"] .editor-note { border-color: var(--tag-law-accent); background: var(--tag-law); }
+  .drop[data-tag="law"] .editor-note__mark { color: var(--tag-law-accent); }
+  .drop[data-tag="politics"] .editor-note { border-color: var(--tag-politics-accent); background: var(--tag-politics); }
+  .drop[data-tag="politics"] .editor-note__mark { color: var(--tag-politics-accent); }
+  .drop[data-tag="culture"] .editor-note { border-color: var(--tag-culture-accent); background: var(--tag-culture); }
+  .drop[data-tag="culture"] .editor-note__mark { color: var(--tag-culture-accent); }
+  .drop[data-tag="attention"] .editor-note { border-color: var(--tag-attention-accent); background: var(--tag-attention); }
+  .drop[data-tag="attention"] .editor-note__mark { color: var(--tag-attention-accent); }
+  .drop[data-tag="ai"] .editor-note { border-color: var(--tag-ai-accent); background: var(--tag-ai); }
+  .drop[data-tag="ai"] .editor-note__mark { color: var(--tag-ai-accent); }
+  .drop[data-tag="psychology"] .editor-note { border-color: var(--tag-psychology-accent); background: var(--tag-psychology); }
+  .drop[data-tag="psychology"] .editor-note__mark { color: var(--tag-psychology-accent); }
+  .drop[data-tag="contrarian"] .editor-note { border-color: var(--tag-contrarian-accent); background: var(--tag-contrarian); }
+  .drop[data-tag="contrarian"] .editor-note__mark { color: var(--tag-contrarian-accent); }
+  .drop[data-tag="work"] .editor-note { border-color: var(--tag-work-accent); background: var(--tag-work); }
+  .drop[data-tag="work"] .editor-note__mark { color: var(--tag-work-accent); }
 
   @media (max-width: 720px) {
     .drop__related-grid { grid-template-columns: 1fr; }

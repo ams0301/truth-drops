@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import ArticleCard from '../components/ArticleCard.astro';
+import { stamp } from '../lib/format';
 
 const posts = (await getCollection('articles', (p) => !p.data.draft))
   .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
@@ -21,6 +22,20 @@ const years = [...byYear.keys()].sort((a, b) => b - a);
     <p class="page-head__desc">{posts.length} issues across {years.length} year{years.length === 1 ? '' : 's'}.</p>
   </section>
 
+  <!-- Spine index — bookshelf view -->
+  <section class="shell spine-index-wrap reveal">
+    <div class="spine-index" role="list" aria-label="Issues by spine">
+      {posts.map((p) => (
+        <a href={`/drops/${p.slug}`} class="spine-index__item" role="listitem">
+          <span class="spine-index__num">{stamp(p.data.date)}</span>
+          <span class="spine-index__title">{p.data.title}</span>
+          <span class="spine-index__date">{p.data.tags.slice(0, 3).map(t => `#${t}`).join(' ')}</span>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- Year-grouped list (traditional view) -->
   <section class="shell archive">
     {years.map((y) => (
       <div class="archive__year reveal">
@@ -46,6 +61,47 @@ const years = [...byYear.keys()].sort((a, b) => b - a);
   }
   .page-head__desc { color: var(--text-secondary); font-family: var(--font-display); font-style: italic; font-size: 1.05rem; font-variation-settings: 'opsz' 36; }
 
+  /* Spine index */
+  .spine-index-wrap { padding-block: clamp(2rem, 4vw, 3rem); max-width: 1200px; }
+  .spine-index {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+    justify-content: center;
+    margin: 0 -1px;
+  }
+  .spine-index__item {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: var(--font-display);
+    font-size: .85rem;
+    font-weight: 300;
+    color: var(--text-muted);
+    padding: 2rem 1rem;
+    min-height: 280px;
+    border-right: 1px solid var(--rule);
+    background: var(--ink-1);
+    cursor: pointer;
+    text-decoration: none;
+    transition: color var(--duration-fast) var(--ease-out-expo),
+                background var(--duration-fast) var(--ease-out-expo),
+                border-color var(--duration-fast) var(--ease-out-expo);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .spine-index__item:hover,
+  .spine-index__item:focus-visible {
+    color: var(--accent);
+    background: var(--ink-2);
+    border-color: var(--accent);
+    outline: none;
+  }
+  .spine-index__num { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+  .spine-index__title { font-variation-settings: 'opsz' 36; line-height: 1.2; max-width: 180px; }
+  .spine-index__date { font-family: var(--font-mono); font-size: .65rem; opacity: .6; letter-spacing: .02em; max-width: 180px; }
+
   .archive { padding-bottom: 4rem; max-width: 980px; }
   .archive__year + .archive__year { margin-top: 4rem; }
   .archive__year-head {
@@ -59,4 +115,10 @@ const years = [...byYear.keys()].sort((a, b) => b - a);
   .archive__year-num { font-size: 2.6rem; }
   .archive__year-count { font-style: normal; }
   .archive__list { display: grid; gap: 0; }
+
+  @media (max-width: 720px) {
+    .spine-index__item { min-height: 200px; padding: 1.5rem .75rem; font-size: .75rem; }
+    .spine-index__title { max-width: 140px; }
+    .spine-index__date { max-width: 140px; }
+  }
 </style>

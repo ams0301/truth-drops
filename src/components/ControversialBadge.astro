@@ -5,12 +5,13 @@ interface Props {
   description: string;
   href: string;
   controversial?: boolean;
+  tag?: string;
 }
-const { href, controversial = false } = Astro.props;
+const { href, controversial = false, tag = '' } = Astro.props;
 const isOpen = true;
 ---
 {controversial && isOpen && (
-  <aside class="editor-note reveal" data-warn>
+  <aside class="editor-note" data-warn data-tag={tag}>
     <p class="editor-note__body">
       <span class="editor-note__mark">A note from the Editor.</span>
       <span class="editor-note__text">{SITE.name} publishes considered positions, not consensus. The piece that follows holds to its argument; readers are invited to do the same, or to disagree — but in either case, twice through.</span>

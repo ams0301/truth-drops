@@ -1,7 +1,8 @@
 /**
  * Truth Drops — vanilla interaction layer
- * Scroll reveals, reading progress, sticky header shrink, footnote popovers.
- * No frameworks, ~3KB gzipped. Respects prefers-reduced-motion.
+ * Scroll reveals, reading ribbon, sticky header shrink, footnote popovers,
+ * editor note unfiling, page-turn transitions.
+ * No frameworks, ~4KB gzipped. Respects prefers-reduced-motion.
  */
 
 (function () {
@@ -16,6 +17,7 @@
   function initScrollReveal() {
     if (prefersReduced) {
       document.querySelectorAll('.reveal').forEach(el => el.classList.add('is-in'));
+      document.querySelectorAll('.editor-note').forEach(el => el.classList.add('is-visible'));
       return;
     }
 
@@ -23,6 +25,9 @@
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('is-in');
+          if (entry.target.classList.contains('editor-note')) {
+            entry.target.classList.add('is-visible');
+          }
           observer.unobserve(entry.target);
         }
       });
@@ -32,14 +37,16 @@
     });
 
     document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    document.querySelectorAll('.editor-note').forEach(el => observer.observe(el));
   }
 
   // ============================================================
-  // 2. Reading Progress Bar (article pages only)
+  // 2. Vertical Reading Ribbon (article pages)
   // ============================================================
-  function initReadingProgress() {
-    const bar = document.querySelector('.reading-progress');
-    if (!bar) return;
+  function initReadingRibbon() {
+    const ribbon = document.querySelector('.reading-ribbon');
+    const fill = document.querySelector('.reading-ribbon__fill');
+    if (!ribbon || !fill) return;
 
     const article = document.querySelector('.drop__body') || document.querySelector('main article');
     if (!article) return;
@@ -51,7 +58,7 @@
       const articleHeight = rect.height;
       const scrolled = -rect.top + viewportHeight;
       const progress = Math.max(0, Math.min(1, scrolled / (articleHeight + viewportHeight)));
-      bar.style.width = (progress * 100) + '%';
+      fill.style.height = (progress * 100) + '%';
       ticking = false;
     }
 
@@ -64,7 +71,7 @@
 
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll, { passive: true });
-    update(); // initial
+    update();
   }
 
   // ============================================================
@@ -74,15 +81,13 @@
     const header = document.querySelector('.site-header');
     if (!header) return;
 
-    const shrinkThreshold = 120; // px scrolled before shrink starts
-    let lastScrollY = window.scrollY;
+    const shrinkThreshold = 120;
     let ticking = false;
 
     function update() {
       const scrollY = window.scrollY;
       const shouldShrink = scrollY > shrinkThreshold;
       header.classList.toggle('is-shrunk', shouldShrink);
-      lastScrollY = scrollY;
       ticking = false;
     }
 
@@ -122,16 +127,13 @@
       const viewportHeight = window.innerHeight;
       const gap = 8;
 
-      // Default: above the reference
       let top = refRect.top - popoverRect.height - gap;
       let left = refRect.left + (refRect.width / 2) - (popoverRect.width / 2);
 
-      // Flip to below if not enough space above
       if (top < gap) {
         top = refRect.bottom + gap;
       }
 
-      // Clamp horizontally
       if (left < gap) left = gap;
       if (left + popoverRect.width > viewportWidth - gap) {
         left = viewportWidth - popoverRect.width - gap;
@@ -147,7 +149,6 @@
       const popover = document.getElementById(id);
       if (!popover || !popover.classList.contains('footnote-popover')) return;
 
-      // Ensure popover is in body for positioning
       document.body.appendChild(popover);
 
       function open() {
@@ -178,7 +179,6 @@
       popover.querySelector('.footnote-popover__close')?.addEventListener('click', close);
     });
 
-    // Close on outside click / scroll / resize
     document.addEventListener('click', (e) => {
       if (currentPopover && !currentPopover.contains(e.target) && e.target !== currentRef) {
         closeAll();
@@ -190,7 +190,7 @@
   }
 
   // ============================================================
-  // 5. Smooth scroll offset for anchor links (skip link, etc.)
+  // 5. Smooth scroll offset for anchor links
   // ============================================================
   function initAnchorOffset() {
     const header = document.querySelector('.site-header');
@@ -215,21 +215,67 @@
   }
 
   // ============================================================
+  // 6. Page-turn transition between drops (View Transitions API)
+  // ============================================================
+  function initPageTransitions() {
+    if (!document.startViewTransition) return;
+
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest('a[href]');
+      if (!link) return;
+
+      const href = link.getAttribute('href');
+      if (!href) return;
+
+      // Only transition for internal article-to-article navigation
+      const isInternal = href.startsWith('/drops/') || href === '/' || href.startsWith('/tags/') || href.startsWith('/archive');
+      const isSameOrigin = link.origin === window.location.origin;
+      if (!isInternal || !isSameOrigin) return;
+
+      // Skip if modifier keys pressed
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+
+      e.preventDefault();
+
+      document.startViewTransition(() => {
+        window.location.href = href;
+      });
+    });
+  }
+
+  // ============================================================
+  // 7. Custom cursor for article body (text caret feel)
+  // ============================================================
+  function initCustomCursor() {
+    if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+    if (prefersReduced) return;
+
+    const style = document.createElement('style');
+    style.textContent = `
+      .prose, .drop__body { cursor: text !important; }
+      .prose *:not(a):not(button):not(input):not([role="button"]), 
+      .drop__body *:not(a):not(button):not(input):not([role="button"]) { cursor: text !important; }
+      .prose a, .drop__body a, .prose button, .drop__body button { cursor: pointer !important; }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // ============================================================
   // Init all
   // ============================================================
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-      initScrollReveal();
-      initReadingProgress();
-      initHeaderShrink();
-      initFootnotes();
-      initAnchorOffset();
-    });
-  } else {
+  function init() {
     initScrollReveal();
-    initReadingProgress();
+    initReadingRibbon();
     initHeaderShrink();
     initFootnotes();
     initAnchorOffset();
+    initPageTransitions();
+    initCustomCursor();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
 })();

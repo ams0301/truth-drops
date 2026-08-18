@@ -1,0 +1,43 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Not Found" description="The requested page does not exist.">
+  <section class="shell nf">
+    <p class="nf__code">Error 404 — Page Not Found</p>
+    <h1 class="nf__title"><em>This issue was never published.</em></h1>
+    <p class="nf__desc">The address you followed leads nowhere on this site. The piece may have been retitled, withdrawn, or never have existed in the first place. You are, however, warmly invited to the rest of the publication.</p>
+    <div class="nf__cta">
+      <a href="/" class="btn">Return to the current issue</a>
+      <a href="/archive" class="btn btn--ghost">Browse the archive</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf {
+    padding-block: clamp(5rem, 14vw, 10rem);
+    text-align: center;
+    max-width: 720px;
+  }
+  .nf__code {
+    font-family: var(--font-mono);
+    color: var(--text-faint);
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    margin: 0 0 1.5rem;
+  }
+  .nf__title { font-size: clamp(2.5rem, 7vw, 4.5rem); margin: 0 0 1.25rem; max-width: 14ch; margin-inline: auto; }
+  .nf__title em { font-style: italic; color: var(--text); }
+  .nf__desc {
+    color: var(--text-dim);
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.15rem;
+    max-width: 44ch;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+    font-variation-settings: 'opsz' 36;
+  }
+  .nf__cta { display: flex; gap: .8rem; flex-wrap: wrap; justify-content: center; }
+</style>

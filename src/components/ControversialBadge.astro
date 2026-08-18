@@ -1,0 +1,75 @@
+---
+import { SITE } from '../config';
+interface Props {
+  title: string;
+  description: string;
+  href: string;
+  controversial?: boolean;
+}
+const { href, controversial = false } = Astro.props;
+const isOpen = true;
+---
+{controversial && isOpen && (
+  <aside class="note reveal" data-warn>
+    <p class="note__body">
+      <span class="note__mark">A note from the Editor.</span>
+      <span class="note__text">{SITE.name} publishes considered positions, not consensus. The piece that follows holds to its argument; readers are invited to do the same, or to disagree — but in either case, twice through.</span>
+    </p>
+    <a class="note__close" href={href} data-warn-dismiss aria-label="Dismiss note">×</a>
+  </aside>
+)}
+
+<style>
+  .note {
+    display: grid; grid-template-columns: 1fr auto;
+    gap: 1.5rem; align-items: start;
+    background: transparent;
+    border-top: 1px solid var(--line-strong);
+    border-bottom: 1px solid var(--line-strong);
+    padding: 1.4rem 0;
+    margin: 0 auto 2.5rem;
+    max-width: var(--measure);
+    font-size: .92rem;
+  }
+  .note__body { margin: 0; color: var(--text-dim); line-height: 1.7; }
+  .note__mark {
+    display: block;
+    font-family: var(--font-mono);
+    font-size: .68rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: .6em;
+  }
+  .note__text { font-family: var(--font-display); font-style: italic; font-size: 1rem; color: var(--text); font-variation-settings: 'opsz' 36; }
+  .note__close { color: var(--text-faint); font-size: 1.1rem; line-height: 1; text-decoration: none; padding: .2em .3em; transition: color .2s var(--ease); }
+  .note__close:hover { color: var(--accent); }
+
+  @media (max-width: 600px) {
+    .note { grid-template-columns: 1fr; gap: 1rem; }
+    .note__close { justify-self: end; }
+  }
+</style>
+
+<script is:inline>
+  (function () {
+    try {
+      var dismissed = document.cookie.indexOf('td-hideWarning=1') !== -1;
+      if (dismissed) {
+        var aside = document.querySelector('[data-warn]');
+        if (aside) aside.style.display = 'none';
+      }
+    } catch (_) {}
+  })();
+  document.addEventListener('click', (e) => {
+    const t = e.target;
+    if (!t || !t.closest) return;
+    if (t.closest('[data-warn-dismiss]')) {
+      const aside = document.querySelector('[data-warn]');
+      if (aside) aside.style.display = 'none';
+      try {
+        document.cookie = 'td-hideWarning=1; Max-Age=2592000; Path=/; SameSite=Lax';
+      } catch (_) {}
+    }
+  });
+</script>

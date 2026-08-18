@@ -1,0 +1,132 @@
+---
+import { stamp, readingTime } from '../lib/format';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  post: CollectionEntry<'articles'>;
+  variant?: 'card' | 'row' | 'feature';
+}
+const { post, variant = 'card' } = Astro.props;
+const { data, body, slug } = post;
+const url = `/drops/${slug}`;
+const rt = readingTime(body);
+---
+<article class:list={['card', `card--${variant}`]}>
+  <a href={url} class="card__link">
+    <div class="card__meta">
+      <time datetime={data.date.toISOString()}>{stamp(data.date)}</time>
+      <span class="card__sep">·</span>
+      <span>{rt} min</span>
+    </div>
+
+    <h3 class="card__title">{data.title}</h3>
+
+    {data.subtitle && <p class="card__sub">{data.subtitle}</p>}
+    {variant !== 'feature' && <p class="card__desc">{data.description}</p>}
+
+    {data.tags.length > 0 && (
+      <div class="card__tags">
+        {data.tags.slice(0, 3).map(t => <span class="tag">{t}</span>)}
+      </div>
+    )}
+  </a>
+</article>
+
+<style>
+  .card { position: relative; }
+  .card__link {
+    display: block; color: var(--text);
+    text-decoration: none;
+    height: 100%;
+  }
+
+  /* default card */
+  .card--card {
+    border-top: 1px solid var(--line-strong);
+    padding: 1.8rem 0 2rem;
+    transition: opacity .25s var(--ease);
+  }
+  .card--card:hover { opacity: .88; }
+  .card--card:hover .card__title { color: var(--accent); }
+
+  .card__meta {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    color: var(--text-faint);
+    letter-spacing: .04em;
+    margin-bottom: 1rem;
+    display: flex; gap: .5em; align-items: center;
+  }
+  .card__sep { color: var(--line-strong); }
+  .card__title {
+    font-size: clamp(1.4rem, 2vw, 1.7rem);
+    margin: 0 0 .4em;
+    font-weight: 400;
+    line-height: 1.18;
+    transition: color .25s var(--ease);
+    font-variation-settings: 'opsz' 48;
+  }
+  .card__sub {
+    color: var(--text-dim);
+    margin: 0 0 .6em;
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.05rem;
+    font-variation-settings: 'opsz' 36;
+  }
+  .card__desc {
+    color: var(--text-dim);
+    font-size: .93rem;
+    line-height: 1.6;
+    margin: 0 0 1rem;
+    max-width: 50ch;
+  }
+  .card__tags { margin-top: 1rem; display: flex; gap: .5rem; flex-wrap: wrap; }
+
+  /* row variant (archive list) */
+  .card--row {
+    border-top: 1px solid var(--line);
+    padding: 1.4rem 0;
+    transition: opacity .2s var(--ease);
+  }
+  .card--row + .card--row { /* hairline stack */ }
+  .card--row .card__link { display: grid; grid-template-columns: 9rem 1fr auto; gap: 1.5rem; align-items: baseline; }
+  .card--row .card__title { font-size: 1.25rem; margin: 0; }
+  .card--row .card__desc, .card--row .card__sub { display: none; }
+  .card--row .card__tags { grid-column: 2 / 3; margin-top: .35rem; }
+  .card--row:hover { opacity: .85; }
+  .card--row:hover .card__title { color: var(--accent); }
+
+  /* feature variant (hero / latest) */
+  .card--feature {
+    padding: 0;
+    text-align: left;
+  }
+  .card--feature .card__link {
+    display: grid; grid-template-columns: 1fr;
+    gap: 1.5rem;
+    padding-bottom: 3rem;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .card--feature .card__title {
+    font-size: clamp(2.4rem, 5.5vw, 4rem);
+    margin: 0;
+    line-height: 1.04;
+    font-variation-settings: 'opsz' 144;
+    max-width: 18ch;
+  }
+  .card--feature .card__sub {
+    font-size: 1.2rem;
+    max-width: 38ch;
+  }
+  .card--feature .card__desc {
+    font-size: 1rem;
+    max-width: 56ch;
+    margin: 0;
+  }
+  .card--feature:hover .card__title { color: var(--accent); }
+
+  @media (max-width: 720px) {
+    .card--row .card__link { grid-template-columns: 1fr; gap: .4rem; }
+  }
+</style>

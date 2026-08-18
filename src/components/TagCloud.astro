@@ -1,0 +1,40 @@
+---
+import { tagSlug } from '../lib/format';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  posts: CollectionEntry<'articles'>[];
+}
+const { posts } = Astro.props;
+
+// Aggregate counts
+const counts = new Map<string, number>();
+for (const p of posts) {
+  for (const t of p.data.tags) counts.set(t, (counts.get(t) ?? 0) + 1);
+}
+// Sort by count desc, then name
+const tags = [...counts.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+---
+<div class="tagcloud">
+  {tags.map(([tag, n]) => (
+    <a href={`/tags/${tagSlug(tag)}`} class="tag tag--big">
+      #{tag}<span class="tag__n">{n}</span>
+    </a>
+  ))}
+</div>
+
+<style>
+  .tagcloud { display: flex; flex-wrap: wrap; gap: .55rem; }
+  .tag--big {
+    font-size: .85rem;
+    padding: .45em .8em;
+  }
+  .tag__n {
+    margin-left: .55em;
+    color: var(--text-faint);
+    font-size: .7em;
+    border-left: 1px solid var(--line-strong);
+    padding-left: .45em;
+  }
+  .tag--big:hover .tag__n { color: var(--accent); border-color: var(--accent); }
+</style>

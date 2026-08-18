@@ -1,0 +1,150 @@
+---
+import Base from './Base.astro';
+import ControversialBadge from '../components/ControversialBadge.astro';
+import Comments from '../components/Comments.astro';
+import { stamp, iso, readable, readingTime } from '../lib/format';
+import { SITE } from '../config';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props { post: CollectionEntry<'articles'> }
+const { post } = Astro.props;
+const { data, body, slug } = post;
+const url = `/drops/${slug}`;
+const { Content } = await post.render();
+const rt = readingTime(body);
+const year = data.date.getUTCFullYear();
+---
+<Base title={data.title} description={data.description}>
+  <article class="drop">
+    <header class="drop__head shell">
+      <p class="drop__kicker reveal">
+        <a href="/archive">The Archive</a>
+        <span class="drop__kicker-sep">/</span>
+        <span>{year}</span>
+      </p>
+
+      <h1 class="drop__title reveal">{data.title}</h1>
+      {data.subtitle && <p class="drop__sub reveal">{data.subtitle}</p>}
+
+      <div class="drop__meta reveal">
+        <span class="drop__meta-item">Filed <time datetime={iso(data.date)}>{readable(data.date)}</time></span>
+        <span class="drop__meta-sep">·</span>
+        <span class="drop__meta-item">{rt} minute read</span>
+        <span class="drop__meta-sep">·</span>
+        <span class="drop__meta-item">{SITE.author}</span>
+      </div>
+    </header>
+
+    <div class="shell drop__note-wrap">
+      <ControversialBadge controversial={data.controversial} href={url} title={data.title} description={data.description} />
+    </div>
+
+    <div class="prose drop__body reveal">
+      <Content />
+
+      <hr class="drop__end" />
+      <p class="drop__sign">
+        <span class="drop__sign-mark">—</span>
+        {SITE.author}, <em>{readable(data.date)}</em>
+      </p>
+
+      <div class="drop__cta">
+        <a href="/" class="btn">&larr; Return to current issue</a>
+        <a href="/rss.xml" class="btn btn--ghost">Subscribe via RSS</a>
+      </div>
+    </div>
+
+    {data.tags.length > 0 && (
+      <aside class="shell drop__tags">
+        <p class="drop__tags-label">Filed under</p>
+        <div class="drop__tags-list">
+          {data.tags.map(t => <a class="tag" href={`/tags/${t.toLowerCase().replace(/[^\w]+/g,'-').replace(/^-+|-+$/g,'')}`}>{t}</a>)}
+        </div>
+      </aside>
+    )}
+
+    <div class="shell">
+      <Comments />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .drop__head { text-align: center; padding-block: clamp(3rem, 8vw, 6rem) 2rem; }
+  .drop__kicker {
+    font-family: var(--font-mono);
+    color: var(--text-faint);
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    display: flex; gap: .7em; justify-content: center; flex-wrap: wrap;
+  }
+  .drop__kicker a { color: var(--text-dim); text-decoration: none; border-bottom: 1px solid transparent; padding-bottom: 1px; transition: color .2s var(--ease), border-color .2s var(--ease); }
+  .drop__kicker a:hover { color: var(--accent); border-color: var(--accent-soft); }
+  .drop__kicker-sep { color: var(--line-strong); }
+
+  .drop__title {
+    font-size: clamp(2.4rem, 6.5vw, 4.5rem);
+    margin: 0 auto .35em;
+    max-width: 22ch;
+    font-weight: 400;
+    line-height: 1.05;
+    font-variation-settings: 'opsz' 144;
+    font-style: italic;
+  }
+  .drop__sub {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: clamp(1.1rem, 2.4vw, 1.4rem);
+    color: var(--text-dim);
+    max-width: 36ch;
+    margin: 0 auto;
+    font-variation-settings: 'opsz' 48;
+  }
+
+  .drop__meta {
+    margin-top: 2rem;
+    display: inline-flex; gap: .55em; justify-content: center; flex-wrap: wrap;
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    color: var(--text-faint);
+    letter-spacing: .04em;
+  }
+  .drop__head { display: flex; flex-direction: column; align-items: center; }
+  .drop__meta { align-self: center; }
+  .drop__meta-sep { color: var(--line-strong); }
+
+  .drop__note-wrap { display: flex; justify-content: center; }
+
+  .drop__body { padding-block: 2.5rem 1rem; }
+  .drop__end { margin-block: 3.5rem 1.5rem; border-top: 1px solid var(--line-fine); }
+  .drop__sign {
+    font-family: var(--font-display);
+    font-style: normal;
+    color: var(--text-dim);
+    font-size: 1rem;
+    display: flex; align-items: baseline; gap: .6em;
+    font-variation-settings: 'opsz' 36;
+  }
+  .drop__sign em { font-style: italic; color: var(--text); }
+  .drop__sign-mark { color: var(--accent); }
+  .drop__cta { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: 2rem; }
+
+  .drop__tags {
+    padding-block: 2.5rem;
+    border-top: 1px solid var(--line-fine);
+    border-bottom: 1px solid var(--line-fine);
+    margin-top: 3rem;
+    display: flex; align-items: baseline; gap: 1.5rem; flex-wrap: wrap;
+  }
+  .drop__tags-label {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    color: var(--text-faint);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin: 0;
+  }
+  .drop__tags-list { display: flex; gap: 1rem; flex-wrap: wrap; }
+</style>

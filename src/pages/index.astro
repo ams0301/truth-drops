@@ -1,0 +1,112 @@
+---
+import Base from '../layouts/Base.astro';
+import ArticleCard from '../components/ArticleCard.astro';
+import { SITE } from '../config';
+import { stamp } from '../lib/format';
+import { getCollection } from 'astro:content';
+
+const posts = (await getCollection('articles', (p) => !p.data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const [feature, ...rest] = posts;
+const recent = rest.slice(0, 4);
+---
+<Base>
+  <!-- feature / lead -->
+  {feature && (
+    <section class="shell feature">
+      <p class="feature__eyebrow">
+        <span class="feature__eyebrow-mark">№</span>
+        <span>Issue {stamp(feature.data.date)} — Current</span>
+      </p>
+      <ArticleCard post={feature} variant="feature" />
+    </section>
+  )}
+
+  <div class="rule-diamond">
+    <span class="rule-diamond__mark">◆</span>
+  </div>
+
+  <!-- recent -->
+  <section class="shell home-recent">
+    <header class="home-recent__head reveal">
+      <h2>Recent</h2>
+      <p class="home-recent__count">A curated selection from the back catalogue.</p>
+    </header>
+
+    <div class="home-recent__grid reveal">
+      {recent.map((p) => <ArticleCard post={p} />)}
+    </div>
+
+    {rest.length > recent.length && (
+      <p class="home-recent__more">
+        <a href="/archive" class="home-recent__link">Continue to the full archive →</a>
+      </p>
+    )}
+  </section>
+
+  <div class="rule-diamond">
+    <span class="rule-diamond__mark">◆</span>
+  </div>
+
+  <!-- subscribe -->
+  <section class="shell home-cta">
+    <p class="home-cta__label">Correspondence</p>
+    <h2 class="home-cta__title">Receive each issue as it is published.</h2>
+    <p class="home-cta__desc">One letter, dispatched the moment a new piece is filed. No promotions, no second email, no tracking of any kind. Or read by way of <a href="/rss.xml">RSS</a>, should you prefer your reading list without intermediaries.</p>
+    <div class="home-cta__row">
+      <a href={`mailto:${SITE.email}?subject=Subscribe`} class="btn">Write to the Editor</a>
+      <a href="/rss.xml" class="btn btn--ghost">Subscribe via RSS</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .feature { padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 3rem); }
+  .feature__eyebrow {
+    display: flex; align-items: center; gap: .6em;
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+    margin: 0 0 1.5rem;
+  }
+  .feature__eyebrow-mark { color: var(--accent); }
+
+  .home-recent { padding-block: clamp(2rem, 5vw, 3rem); }
+  .home-recent__head { margin-bottom: 2.5rem; max-width: 60ch; }
+  .home-recent__head h2 { margin: 0 0 .4em; font-style: italic; font-variation-settings: 'opsz' 96; }
+  .home-recent__count { color: var(--text-dim); font-size: 1.05rem; margin: 0; max-width: 50ch; }
+
+  .home-recent__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 0 3rem;
+  }
+  .home-recent__more { margin-top: 3rem; text-align: right; }
+  .home-recent__link {
+    font-family: var(--font-display);
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--text);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+    padding-bottom: 2px;
+    transition: color .25s var(--ease), border-color .25s var(--ease);
+  }
+  .home-recent__link:hover { color: var(--accent); border-color: var(--accent); }
+
+  .home-cta { padding-block: clamp(2rem, 5vw, 3rem) clamp(3rem, 6vw, 4rem); max-width: 920px; }
+  .home-cta__label {
+    font-family: var(--font-mono);
+    color: var(--text-faint);
+    font-size: .72rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin: 0 0 1rem;
+  }
+  .home-cta__title { max-width: 22ch; font-style: italic; font-variation-settings: 'opsz' 96; }
+  .home-cta__desc { color: var(--text-dim); max-width: 56ch; margin: 1.25rem 0 2rem; font-size: 1.05rem; line-height: 1.7; }
+  .home-cta__row { display: flex; gap: 1rem; flex-wrap: wrap; }
+</style>

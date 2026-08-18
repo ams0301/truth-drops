@@ -1,0 +1,77 @@
+---
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import ArticleCard from '../components/ArticleCard.astro';
+
+const posts = (await getCollection('articles', (p) => !p.data.draft))
+  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf());
+
+const byYear = new Map<number, typeof posts>();
+for (const p of posts) {
+  const y = p.data.date.getUTCFullYear();
+  if (!byYear.has(y)) byYear.set(y, []);
+  byYear.get(y)!.push(p);
+}
+const years = [...byYear.keys()].sort((a, b) => b - a);
+---
+<Base title="The Archive" description="The complete back catalogue of essays, organised by year of publication.">
+  <section class="shell page-head">
+    <p class="page-head__eyebrow">The Archive</p>
+    <h1 class="page-head__title">Every piece, in order of publication.</h1>
+    <p class="page-head__desc">{posts.length} issues across {years.length} year{years.length === 1 ? '' : 's'}.</p>
+  </section>
+
+  <section class="shell archive">
+    {years.map((y) => (
+      <div class="archive__year reveal">
+        <h2 class="archive__year-head">
+          <span class="archive__year-num">{y}</span>
+          <span class="archive__year-count">{byYear.get(y)!.length} {byYear.get(y)!.length === 1 ? 'issue' : 'issues'}</span>
+        </h2>
+        <div class="archive__list">
+          {byYear.get(y)!.map((p) => <ArticleCard post={p} variant="row" />)}
+        </div>
+      </div>
+    ))}
+  </section>
+</Base>
+
+<style>
+  .page-head { padding-block: clamp(3rem, 8vw, 5rem) clamp(2rem, 4vw, 3rem); text-align: center; }
+  .page-head__eyebrow {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 1.25rem;
+  }
+  .page-head__title {
+    font-style: italic;
+    max-width: 22ch;
+    margin: 0 auto .6em;
+    font-variation-settings: 'opsz' 144;
+  }
+  .page-head__desc { color: var(--text-dim); font-family: var(--font-display); font-style: italic; font-size: 1.05rem; font-variation-settings: 'opsz' 36; }
+
+  .archive { padding-bottom: 4rem; max-width: 980px; }
+  .archive__year + .archive__year { margin-top: 4rem; }
+  .archive__year-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin: 0 0 1rem;
+    padding-bottom: .8rem;
+    border-bottom: 1px solid var(--line-strong);
+    font-style: italic;
+    font-variation-settings: 'opsz' 96;
+  }
+  .archive__year-num { font-size: 2.6rem; }
+  .archive__year-count {
+    font-family: var(--font-mono);
+    font-size: .7rem;
+    color: var(--text-faint);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    font-style: normal;
+  }
+  .archive__list { display: grid; gap: 0; }
+</style>

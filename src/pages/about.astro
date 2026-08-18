@@ -1,0 +1,72 @@
+---
+import Base from '../layouts/Base.astro';
+import { SITE } from '../config';
+---
+<Base title="Colophon" description="The principles of this publication, and a brief account of the editor.">
+  <section class="shell page-head">
+    <p class="page-head__eyebrow">A Note</p>
+    <h1 class="page-head__title">On this publication.</h1>
+  </section>
+
+  <article class="prose drop__body">
+    <p>Most writing online is engineered. Sentences are stress-tested for shareability. Conclusions are sanded down so as not to offend. Every paragraph is, before it is anything else, a hedge — written less to be true than to be tolerated.</p>
+
+    <p>This is a counter-proposal. Each issue of <em>{SITE.name}</em> is an argument held to its conclusion, written as one would speak to a friend at a small dinner — that is, precisely, and without the softeners that mass publication seems to require.</p>
+
+    <h2>Principles</h2>
+    <ul>
+      <li><strong>No engagement bait.</strong> Nothing here is written to perform. If a piece finds an audience, it does so on the merits.</li>
+      <li><strong>No analytics.</strong> No trackers, no pixels, no cookies beyond the single, browser-local flag that remembers your dismissal of repeated editorial notes. The readership is none of the publication's business.</li>
+      <li><strong>No advertising.</strong> The site is hosted on the free tier of a public infrastructure; the cost of this publication is, and shall remain, zero.</li>
+      <li><strong>No schedule.</strong> An issue appears when the editor has something to say. Some quarters will carry three pieces; some, none.</li>
+      <li><strong>Considered disagreement welcome.</strong> The arguments are held firmly. They are also held provisionally. The editor can be reached at the address below.</li>
+    </ul>
+
+    <h2>On the editor</h2>
+    <p>The editor is <strong>{SITE.author}</strong>. The byline is the only biographical note intended. Correspondence of substance may be directed to <a href={`mailto:${SITE.email}?subject=Correspondence`}>{SITE.email}</a>.</p>
+
+    <h2>Typography & craft</h2>
+    <p>Display type is set in <em>Fraunces</em>, a contemporary serif in the humanist tradition. Body text is set in <em>Inter</em>. The site is rendered statically, served from the edge, and built without JavaScript frameworks. The codebase is plain enough to be read in an afternoon.</p>
+
+    <h2>Licence</h2>
+    <p>Essays are released to the public domain at the moment of publication. Borrow them. Attribute them. Improve upon them.</p>
+
+    <hr class="drop__end" />
+    <p class="drop__sign">
+      <span class="drop__sign-mark">—</span>
+      {SITE.author}
+    </p>
+    <div class="drop__cta">
+      <a href="/" class="btn">Read the current issue</a>
+      <a href="/rss.xml" class="btn btn--ghost">Subscribe via RSS</a>
+    </div>
+  </article>
+</Base>
+
+<style>
+  .page-head { padding-block: clamp(3rem, 8vw, 5rem) clamp(2rem, 4vw, 3rem); text-align: center; }
+  .page-head__eyebrow {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 1.25rem;
+  }
+  .page-head__title {
+    font-style: italic;
+    max-width: 18ch;
+    margin: 0 auto;
+    font-variation-settings: 'opsz' 144;
+  }
+  .drop__end { margin-block: 3.5rem 1.5rem; border-top: 1px solid var(--line-fine); }
+  .drop__sign {
+    font-family: var(--font-display);
+    color: var(--text-dim);
+    font-size: 1rem;
+    display: flex; align-items: baseline; gap: .6em;
+    font-variation-settings: 'opsz' 36;
+  }
+  .drop__sign-mark { color: var(--accent); }
+  .drop__cta { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: 2rem; }
+</style>

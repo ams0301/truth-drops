@@ -219,15 +219,12 @@
   // ============================================================
   function initBrokenVessel() {
     if (prefersReduced) {
-      // Show fully fractured state
       document.querySelectorAll('.broken-vessel:not(.is-static)').forEach(vessel => {
         vessel.querySelectorAll('.crack-path').forEach(crack => {
           crack.style.strokeDashoffset = '0';
           crack.classList.add('active');
         });
-        // Add split transform for final pieces
-        vessel.querySelectorAll('.crack-path.stage-5').forEach(c => c.style.transform = 'translateX(-4px)');
-        vessel.querySelectorAll('.crack-path.stage-6').forEach(c => c.style.transform = 'translateX(4px)');
+        vessel.querySelectorAll('.crack-path[data-stage="5"]').forEach(c => c.style.transform = 'translateX(-3px)');
       });
       return;
     }
@@ -235,25 +232,23 @@
     const vessels = document.querySelectorAll('.broken-vessel:not(.is-static)');
     if (!vessels.length) return;
 
-    // Crack stages in order of appearance
+    // Crack stages in order of appearance (matching CSS data-stage attributes)
     const stages = [
-      { selector: '.crack-path.stage-1', threshold: 0.0 },      // Hairline - visible from start
-      { selector: '.crack-path.stage-2', threshold: 0.25 },     // Branch right
-      { selector: '.crack-path.stage-3', threshold: 0.25 },     // Branch left
-      { selector: '.crack-path.stage-4', threshold: 0.4 },      // Chip
-      { selector: '.crack-path.stage-5', threshold: 0.55 },     // Split left
-      { selector: '.crack-path.stage-6', threshold: 0.55 },     // Split right
+      { selector: '.crack-path[data-stage="1"]', threshold: 0.0 },      // Hairline - visible from start
+      { selector: '.crack-path[data-stage="2"]', threshold: 0.2 },     // Right branch
+      { selector: '.crack-path[data-stage="3"]', threshold: 0.2 },     // Left branch
+      { selector: '.crack-path[data-stage="4"]', threshold: 0.35 },    // Chip at rim
+      { selector: '.crack-path[data-stage="5"]', threshold: 0.5 },     // Main fracture
     ];
 
     let ticking = false;
-    let lastScrollY = 0;
 
     function update() {
       const article = document.querySelector('.drop__body') || document.querySelector('main article');
       if (!article) {
-        // On homepage, just show stage 1
+        // On homepage (static vessel), just show hairline crack
         vessels.forEach(vessel => {
-          const crack = vessel.querySelector('.crack-path.stage-1');
+          const crack = vessel.querySelector('.crack-path[data-stage="1"]');
           if (crack) {
             crack.style.strokeDashoffset = '0';
             crack.classList.add('active');
@@ -282,20 +277,16 @@
             crack.classList.remove('active');
           }
 
-          // Add split transform for final stages when fully scrolled
-          if (selector.includes('stage-5') && progress >= 0.9) {
-            crack.style.transform = 'translateX(-4px)';
-            crack.style.transformOrigin = 'center';
-          }
-          if (selector.includes('stage-6') && progress >= 0.9) {
-            crack.style.transform = 'translateX(4px)';
+          // Add split transform for final fracture when near end
+          if (selector.includes('data-stage="5"') && progress >= 0.88) {
+            crack.style.transform = 'translateX(-3px)';
             crack.style.transformOrigin = 'center';
           }
 
           // Flash accent on final crack at sign-off (near end of article)
-          if (selector.includes('stage-5') && progress >= 0.95) {
+          if (selector.includes('data-stage="5"') && progress >= 0.95) {
             crack.classList.add('final-flash');
-            setTimeout(() => crack.classList.remove('final-flash'), 800);
+            setTimeout(() => crack.classList.remove('final-flash'), 1000);
           }
         });
       });
@@ -332,6 +323,12 @@
 
     let isTransitioning = false;
 
+    // Timing constants matching the new elegant CSS animations
+    const DROP_DURATION = 1200;
+    const RIPPLE_DELAY = 350;
+    const REVEAL_DELAY = 500;
+    const TOTAL_DURATION = 1800;
+
     function playTransition(href, clickX, clickY) {
       if (isTransitioning) return;
       isTransitioning = true;
@@ -345,27 +342,24 @@
       transitionOverlay.classList.add('playing');
 
       // Wait for drop to land, then start ripple + reveal
-      const dropDuration = 450;
-      const rippleDelay = 300;
-
       setTimeout(() => {
         transitionOverlay.classList.add('revealing');
         transitionOverlay.classList.remove('playing');
-      }, rippleDelay);
+      }, REVEAL_DELAY);
 
       // Start view transition after ripple begins
       setTimeout(() => {
         document.startViewTransition(() => {
           window.location.href = href;
         });
-      }, rippleDelay + 50);
+      }, REVEAL_DELAY + 50);
 
       // Cleanup after transition completes
       setTimeout(() => {
         transitionOverlay.classList.remove('revealing');
         transitionOverlay.hidden = true;
         isTransitioning = false;
-      }, dropDuration + 200);
+      }, TOTAL_DURATION);
     }
 
     document.addEventListener('click', (e) => {
@@ -409,25 +403,26 @@
       if (cracked) return;
       cracked = true;
 
-      // Animate all cracks
-      homeVessel.querySelectorAll('.crack-path').forEach((crack, i) => {
+      // Animate all cracks sequentially with elegant timing
+      const allCracks = homeVessel.querySelectorAll('.crack-path');
+      allCracks.forEach((crack, i) => {
         setTimeout(() => {
           crack.style.strokeDashoffset = '0';
           crack.classList.add('active');
-        }, i * 80);
+        }, i * 180);
       });
 
       // Split pieces
       setTimeout(() => {
-        homeVessel.querySelector('.crack-path.stage-5').style.transform = 'translateX(-4px)';
-        homeVessel.querySelector('.crack-path.stage-6').style.transform = 'translateX(4px)';
-      }, 400);
+        homeVessel.querySelector('.crack-path[data-stage="5"]').style.transform = 'translateX(-3px)';
+        homeVessel.querySelector('.crack-path[data-stage="5"]').style.transformOrigin = 'center';
+      }, 800);
 
       // Spawn ink drop at vessel position
       setTimeout(() => {
         const rect = homeVessel.getBoundingClientRect();
         spawnInkDrop(rect.left + rect.width / 2, rect.top + rect.height / 2);
-      }, 500);
+      }, 900);
     });
   }
 
@@ -443,7 +438,7 @@
     overlay.hidden = false;
     svg.style.transformOrigin = `${x}px ${y}px`;
 
-    // Trigger animations
+    // Trigger animations with new elegant timing
     drop.style.animation = 'none';
     ripple1.style.animation = 'none';
     ripple2.style.animation = 'none';
@@ -451,16 +446,16 @@
     // Force reflow
     void drop.offsetWidth;
 
-    drop.style.animation = 'drop-fall 0.45s var(--ease-out-expo) forwards';
-    ripple1.style.animation = 'ripple-expand 0.55s var(--ease-out-expo) forwards';
-    ripple2.style.animation = 'ripple-expand 0.55s var(--ease-out-expo) forwards';
+    drop.style.animation = 'drop-fall 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+    ripple1.style.animation = 'ripple-expand 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
+    ripple2.style.animation = 'ripple-expand 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards';
 
     setTimeout(() => {
       overlay.hidden = true;
       drop.style.animation = '';
       ripple1.style.animation = '';
       ripple2.style.animation = '';
-    }, 800);
+    }, 1800);
   }
 
   // ============================================================

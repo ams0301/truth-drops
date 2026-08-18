@@ -3,6 +3,7 @@ import Base from './Base.astro';
 import ControversialBadge from '../components/ControversialBadge.astro';
 import Comments from '../components/Comments.astro';
 import ArticleCard from '../components/ArticleCard.astro';
+import BrokenVessel from '../components/BrokenVessel.astro';
 import { stamp, iso, readable, readingTime, tagSlug } from '../lib/format';
 import { SITE } from '../config';
 import { getCollection } from 'astro:content';
@@ -15,6 +16,9 @@ const url = `/drops/${slug}`;
 const { Content } = await post.render();
 const rt = readingTime(body);
 const year = data.date.getUTCFullYear();
+
+// Check for motif flag in frontmatter (default: true = show vessel)
+const showMotif = data.motif !== false;
 
 // Get related posts by shared tags (max 3, excluding current)
 const allPosts = await getCollection('articles', (p) => !p.data.draft && p.slug !== slug);
@@ -32,7 +36,7 @@ const relatedPosts = allPosts
 const primaryTag = data.tags[0]?.toLowerCase().replace(/[^\w]+/g, '-') ?? '';
 ---
 <Base title={data.title} description={data.description}>
-  <article class="drop" data-tag={primaryTag}>
+  <article class="drop" data-tag={primaryTag} data-motif={showMotif}>
     <header class="drop__head shell">
       <p class="drop__kicker reveal">
         <a href="/archive">The Archive</a>
@@ -50,6 +54,12 @@ const primaryTag = data.tags[0]?.toLowerCase().replace(/[^\w]+/g, '-') ?? '';
         <span class="drop__meta-sep">·</span>
         <span class="drop__meta-item">{SITE.author}</span>
       </div>
+
+      {showMotif && (
+        <div class="drop__vessel reveal">
+          <BrokenVessel size={120} />
+        </div>
+      )}
     </header>
 
     <div class="shell drop__note-wrap">
@@ -103,7 +113,7 @@ const primaryTag = data.tags[0]?.toLowerCase().replace(/[^\w]+/g, '-') ?? '';
 </Base>
 
 <style>
-  .drop__head { text-align: center; padding-block: clamp(3rem, 8vw, 6rem) 2rem; }
+  .drop__head { text-align: center; padding-block: clamp(3rem, 8vw, 6rem) 2rem; position: relative; }
   .drop__kicker {
     font-family: var(--font-mono);
     color: var(--text-muted);
@@ -147,6 +157,14 @@ const primaryTag = data.tags[0]?.toLowerCase().replace(/[^\w]+/g, '-') ?? '';
   .drop__head { display: flex; flex-direction: column; align-items: center; }
   .drop__meta { align-self: center; }
   .drop__meta-sep { color: var(--rule-strong); }
+
+  /* Vessel in article header */
+  .drop__vessel {
+    margin-top: 1.5rem;
+    text-align: center;
+    opacity: 0.7;
+  }
+  .drop[data-motif="false"] .drop__vessel { display: none; }
 
   .drop__note-wrap { display: flex; justify-content: center; }
 

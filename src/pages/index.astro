@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import ArticleCard from '../components/ArticleCard.astro';
+import BrokenVessel from '../components/BrokenVessel.astro';
 import { SITE } from '../config';
 import { stamp, tagSlug } from '../lib/format';
 import { getCollection } from 'astro:content';
@@ -46,6 +47,11 @@ const featuredTags = allTags.slice(0, 8);
             <p class="label label--accent">Filed <time datetime={feature.data.date.toISOString()}>{stamp(feature.data.date)}</time></p>
             <p class="label">{SITE.author}</p>
             <p class="label">{feature.data.tags.map(t => `#${t}`).join(' ')}</p>
+          </div>
+          <!-- Broken Vessel on desktop -->
+          <div class="feature__vessel">
+            <BrokenVessel size={160} static={true} />
+            <p class="feature__vessel-label label">FILED</p>
           </div>
         </aside>
       </div>
@@ -188,6 +194,20 @@ const featuredTags = allTags.slice(0, 8);
   }
   .feature__meta .label { margin: 0; }
   .feature__meta time { color: var(--text-secondary); }
+
+  /* Vessel in feature aside */
+  .feature__vessel {
+    display: none;
+    margin-top: 2.5rem;
+    text-align: center;
+  }
+  @media (min-width: 1100px) {
+    .feature__vessel { display: block; }
+  }
+  .feature__vessel-label {
+    margin-top: .75rem;
+    color: var(--text-muted);
+  }
 
   .home-recent { padding-block: clamp(2rem, 5vw, 3rem); }
   .home-recent__head { margin-bottom: 2.5rem; max-width: 60ch; }

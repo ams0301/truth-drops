@@ -1,6 +1,7 @@
 ---
 import { SITE } from '../config';
 import '../styles/global.css';
+import InkDropTransition from '../components/InkDropTransition.astro';
 
 const { pathname } = Astro.url;
 const year = new Date().getFullYear();
@@ -58,6 +59,9 @@ const issueNum = `№ ${issueDate}`;
     <div class="reading-ribbon" aria-hidden="true">
       <div class="reading-ribbon__fill"></div>
     </div>
+
+    <!-- Ink Drop page transition overlay -->
+    <InkDropTransition />
 
     <header class="site-header">
       <div class="shell site-header__inner">

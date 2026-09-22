@@ -10,6 +10,25 @@
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Immediately reveal all content - runs before any other init
+  function forceRevealAll() {
+    document.querySelectorAll('.reveal').forEach(el => {
+      el.classList.add('is-in');
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    });
+    document.querySelectorAll('.editor-note').forEach(el => {
+      el.classList.add('is-visible');
+      el.style.opacity = '1';
+      el.style.transform = 'none';
+    });
+  }
+
+  // Run immediately to prevent flash of hidden content
+  forceRevealAll();
+
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   // Safe wrapper for init functions
   function safeInit(fn, name) {
     try {
@@ -20,14 +39,10 @@
   }
 
   // ============================================================
-  // 1. Scroll Reveal (IntersectionObserver) with fallback
+  // 1. Scroll Reveal (IntersectionObserver) - only for scroll-triggered animations
   // ============================================================
   function initScrollReveal() {
-    if (prefersReduced) {
-      document.querySelectorAll('.reveal').forEach(el => el.classList.add('is-in'));
-      document.querySelectorAll('.editor-note').forEach(el => el.classList.add('is-visible'));
-      return;
-    }
+    if (prefersReduced) return;
 
     const observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
@@ -44,15 +59,8 @@
       threshold: 0.1
     });
 
-    const revealElements = document.querySelectorAll('.reveal');
-    revealElements.forEach(el => observer.observe(el));
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
     document.querySelectorAll('.editor-note').forEach(el => observer.observe(el));
-
-    // Fallback: force reveal after 500ms in case IntersectionObserver misses elements already in view
-    setTimeout(() => {
-      document.querySelectorAll('.reveal:not(.is-in)').forEach(el => el.classList.add('is-in'));
-      document.querySelectorAll('.editor-note:not(.is-visible)').forEach(el => el.classList.add('is-visible'));
-    }, 500);
   }
 
   // ============================================================
@@ -404,7 +412,7 @@
   }
 
   // ============================================================
-  // 8. Custom cursor for article body (text caret feel)
+  // 9. Custom cursor for article body (text caret feel)
   // ============================================================
   function initCustomCursor() {
     if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
@@ -423,6 +431,14 @@
   // ============================================================
   // Init all with error boundaries
   // ============================================================
+  function safeInit(fn, name) {
+    try {
+      fn();
+    } catch (e) {
+      console.warn(`[Truth Drops] ${name} failed:`, e);
+    }
+  }
+
   function init() {
     safeInit(initScrollReveal, 'initScrollReveal');
     safeInit(initReadingRibbon, 'initReadingRibbon');

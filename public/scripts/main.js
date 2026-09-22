@@ -10,8 +10,17 @@
 
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+  // Safe wrapper for init functions
+  function safeInit(fn, name) {
+    try {
+      fn();
+    } catch (e) {
+      console.warn(`[Truth Drops] ${name} failed:`, e);
+    }
+  }
+
   // ============================================================
-  // 1. Scroll Reveal (IntersectionObserver)
+  // 1. Scroll Reveal (IntersectionObserver) with fallback
   // ============================================================
   function initScrollReveal() {
     if (prefersReduced) {
@@ -35,8 +44,15 @@
       threshold: 0.1
     });
 
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    const revealElements = document.querySelectorAll('.reveal');
+    revealElements.forEach(el => observer.observe(el));
     document.querySelectorAll('.editor-note').forEach(el => observer.observe(el));
+
+    // Fallback: force reveal after 500ms in case IntersectionObserver misses elements already in view
+    setTimeout(() => {
+      document.querySelectorAll('.reveal:not(.is-in)').forEach(el => el.classList.add('is-in'));
+      document.querySelectorAll('.editor-note:not(.is-visible)').forEach(el => el.classList.add('is-visible'));
+    }, 500);
   }
 
   // ============================================================
@@ -215,7 +231,6 @@
 
   // ============================================================
   // 6. Broken Amphora — Scroll-driven fracture (article pages)
-  // Crack draws down, then fragments separate
   // ============================================================
   function initBrokenAmphora() {
     if (prefersReduced) {
@@ -238,7 +253,6 @@
     function update() {
       const article = document.querySelector('.drop__body') || document.querySelector('main article');
       if (!article) {
-        // On homepage (static vessel), show crack
         vessels.forEach(vessel => {
           const crack = vessel.querySelector('.crack-path');
           if (crack) {
@@ -261,10 +275,9 @@
         const rightPiece = vessel.querySelector('.fragment-right');
 
         if (crack) {
-          // Crack draws from top to bottom (0% to 60% scroll)
           const crackProgress = Math.min(1, progress / 0.6);
           if (crackProgress > 0) {
-            const totalLength = 180; // matches stroke-dasharray
+            const totalLength = 180;
             crack.style.strokeDashoffset = (totalLength * (1 - crackProgress)).toString();
             if (crackProgress >= 1) {
               crack.style.strokeDashoffset = '0';
@@ -275,7 +288,6 @@
           }
         }
 
-        // Fragments separate after crack completes (60% to 85% scroll)
         const separationProgress = Math.max(0, Math.min(1, (progress - 0.6) / 0.25));
         if (separationProgress > 0) {
           const leftPiece = vessel.querySelector('.fragment-left');
@@ -304,7 +316,6 @@
           }
         }
 
-        // Final flash at sign-off (95% scroll)
         const crack = vessel.querySelector('.crack-path');
         if (crack && progress >= 0.95) {
           crack.classList.add('final-flash');
@@ -367,14 +378,12 @@
       if (cracked) return;
       cracked = true;
 
-      // Animate crack drawing
       const crack = homeVase.querySelector('.crack-path');
       if (crack) {
         crack.style.strokeDashoffset = '0';
         crack.classList.add('active');
       }
 
-      // Separate fragments
       setTimeout(() => {
         const leftPiece = homeVase.querySelector('.fragment-left');
         const rightPiece = homeVase.querySelector('.fragment-right');
@@ -384,7 +393,6 @@
         }
       }, 800);
 
-      // Final flash
       setTimeout(() => {
         const crack = homeVase.querySelector('.crack-path');
         if (crack) {
@@ -413,17 +421,17 @@
   }
 
   // ============================================================
-  // Init all
+  // Init all with error boundaries
   // ============================================================
   function init() {
-    initScrollReveal();
-    initReadingRibbon();
-    initHeaderShrink();
-    initFootnotes();
-    initAnchorOffset();
-    initBrokenAmphora();
-    initVaseEasterEgg();
-    initCustomCursor();
+    safeInit(initScrollReveal, 'initScrollReveal');
+    safeInit(initReadingRibbon, 'initReadingRibbon');
+    safeInit(initHeaderShrink, 'initHeaderShrink');
+    safeInit(initFootnotes, 'initFootnotes');
+    safeInit(initAnchorOffset, 'initAnchorOffset');
+    safeInit(initBrokenAmphora, 'initBrokenAmphora');
+    safeInit(initVaseEasterEgg, 'initVaseEasterEgg');
+    safeInit(initCustomCursor, 'initCustomCursor');
   }
 
   if (document.readyState === 'loading') {

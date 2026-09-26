@@ -46,6 +46,27 @@ const isOpen = true;
   .editor-note__close { color: var(--text-muted); font-size: 1.1rem; line-height: 1; text-decoration: none; padding: .2em .3em; transition: color var(--duration-fast) var(--ease-out-expo); }
   .editor-note__close:hover { color: var(--accent); }
 
+  /* Unfiling animation styles live in global.css (.js is on <html>,
+     which never receives this component's scope attribute). */
+
+  /* Per-tag tint — a whisper of colour keyed to the essay's subject */
+  .editor-note[data-tag="law"] { border-color: var(--tag-law-accent); background: var(--tag-law); }
+  .editor-note[data-tag="law"] .editor-note__mark { color: var(--tag-law-accent); }
+  .editor-note[data-tag="politics"] { border-color: var(--tag-politics-accent); background: var(--tag-politics); }
+  .editor-note[data-tag="politics"] .editor-note__mark { color: var(--tag-politics-accent); }
+  .editor-note[data-tag="culture"] { border-color: var(--tag-culture-accent); background: var(--tag-culture); }
+  .editor-note[data-tag="culture"] .editor-note__mark { color: var(--tag-culture-accent); }
+  .editor-note[data-tag="attention"] { border-color: var(--tag-attention-accent); background: var(--tag-attention); }
+  .editor-note[data-tag="attention"] .editor-note__mark { color: var(--tag-attention-accent); }
+  .editor-note[data-tag="ai"] { border-color: var(--tag-ai-accent); background: var(--tag-ai); }
+  .editor-note[data-tag="ai"] .editor-note__mark { color: var(--tag-ai-accent); }
+  .editor-note[data-tag="psychology"] { border-color: var(--tag-psychology-accent); background: var(--tag-psychology); }
+  .editor-note[data-tag="psychology"] .editor-note__mark { color: var(--tag-psychology-accent); }
+  .editor-note[data-tag="contrarian"] { border-color: var(--tag-contrarian-accent); background: var(--tag-contrarian); }
+  .editor-note[data-tag="contrarian"] .editor-note__mark { color: var(--tag-contrarian-accent); }
+  .editor-note[data-tag="work"] { border-color: var(--tag-work-accent); background: var(--tag-work); }
+  .editor-note[data-tag="work"] .editor-note__mark { color: var(--tag-work-accent); }
+
   @media (max-width: 600px) {
     .editor-note { grid-template-columns: 1fr; gap: 1rem; }
     .editor-note__close { justify-self: end; }

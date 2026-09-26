@@ -81,20 +81,25 @@ const primaryTag = data.tags[0]?.toLowerCase().replace(/[^\w]+/g, '-') ?? '';
 
     <hr class="drop__end" />
 
-    <p class="drop__correction">
-      <a href={`mailto:${SITE.email}?subject=Correction:%20${encodeURIComponent(data.title)}`}>
-        Spotted an error? Write to the editor
-      </a>
-    </p>
+    <!-- Fleuron — the printer's ornament that closes the piece -->
+    <div class="shell">
+      <p class="fleuron" aria-hidden="true">❧</p>
 
-    <p class="drop__sign">
-      <span class="drop__sign-mark">—</span>
-      {SITE.author}, <em>{readable(data.date)}</em>
-    </p>
+      <p class="drop__correction">
+        <a href={`mailto:${SITE.email}?subject=Correction:%20${encodeURIComponent(data.title)}`}>
+          Spotted an error? Write to the editor
+        </a>
+      </p>
 
-    <div class="drop__cta">
-      <a href="/" class="btn">&larr; Return to current issue</a>
-      <a href="/rss.xml" class="btn btn--ghost">Subscribe via RSS</a>
+      <p class="drop__sign">
+        <span class="drop__sign-mark">—</span>
+        {SITE.author}, <em>{readable(data.date)}</em>
+      </p>
+
+      <div class="drop__cta">
+        <a href="/" class="btn">&larr; Return to current issue</a>
+        <a href="/rss.xml" class="btn btn--ghost">Subscribe via RSS</a>
+      </div>
     </div>
 
     {data.tags.length > 0 && (
@@ -237,7 +242,7 @@ const primaryTag = data.tags[0]?.toLowerCase().replace(/[^\w]+/g, '-') ?? '';
     }
   }
 
-  .drop__end { margin-block: 3.5rem 1.5rem; border-top: 1px solid var(--ink-3); }
+  .drop__end { margin-block: 3.5rem 0; border-top: 1px solid var(--ink-3); }
 
   .drop__related {
     padding-block: 2rem 0;
@@ -278,12 +283,12 @@ const primaryTag = data.tags[0]?.toLowerCase().replace(/[^\w]+/g, '-') ?? '';
     font-style: normal;
     color: var(--text-secondary);
     font-size: 1rem;
-    display: flex; align-items: baseline; gap: .6em;
+    display: flex; align-items: baseline; gap: .6em; justify-content: center;
     font-variation-settings: 'opsz' 36;
   }
   .drop__sign em { font-style: italic; color: var(--text-primary); }
   .drop__sign-mark { color: var(--accent); }
-  .drop__cta { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: 2rem; }
+  .drop__cta { display: flex; gap: .8rem; flex-wrap: wrap; justify-content: center; margin-top: 2rem; }
 
   .drop__tags {
     padding-block: 2.5rem;
@@ -301,40 +306,6 @@ const primaryTag = data.tags[0]?.toLowerCase().replace(/[^\w]+/g, '-') ?? '';
     margin: 0;
   }
   .drop__tags-list { display: flex; gap: 1rem; flex-wrap: wrap; }
-
-  /* Editor note unfiling animation */
-  .editor-note {
-    opacity: 0;
-    transform: rotate(-3deg) translateY(-20px) scale(.98);
-    transition: opacity var(--duration-slow) var(--ease-out-expo),
-                transform var(--duration-slow) var(--ease-out-expo);
-    will-change: opacity, transform;
-  }
-  .editor-note.is-visible {
-    opacity: 1;
-    transform: rotate(0deg) translateY(0) scale(1);
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .editor-note { opacity: 1; transform: none; transition: none; }
-  }
-
-  /* Per-tag tint on article */
-  .drop[data-tag="law"] .editor-note { border-color: var(--tag-law-accent); background: var(--tag-law); }
-  .drop[data-tag="law"] .editor-note__mark { color: var(--tag-law-accent); }
-  .drop[data-tag="politics"] .editor-note { border-color: var(--tag-politics-accent); background: var(--tag-politics); }
-  .drop[data-tag="politics"] .editor-note__mark { color: var(--tag-politics-accent); }
-  .drop[data-tag="culture"] .editor-note { border-color: var(--tag-culture-accent); background: var(--tag-culture); }
-  .drop[data-tag="culture"] .editor-note__mark { color: var(--tag-culture-accent); }
-  .drop[data-tag="attention"] .editor-note { border-color: var(--tag-attention-accent); background: var(--tag-attention); }
-  .drop[data-tag="attention"] .editor-note__mark { color: var(--tag-attention-accent); }
-  .drop[data-tag="ai"] .editor-note { border-color: var(--tag-ai-accent); background: var(--tag-ai); }
-  .drop[data-tag="ai"] .editor-note__mark { color: var(--tag-ai-accent); }
-  .drop[data-tag="psychology"] .editor-note { border-color: var(--tag-psychology-accent); background: var(--tag-psychology); }
-  .drop[data-tag="psychology"] .editor-note__mark { color: var(--tag-psychology-accent); }
-  .drop[data-tag="contrarian"] .editor-note { border-color: var(--tag-contrarian-accent); background: var(--tag-contrarian); }
-  .drop[data-tag="contrarian"] .editor-note__mark { color: var(--tag-contrarian-accent); }
-  .drop[data-tag="work"] .editor-note { border-color: var(--tag-work-accent); background: var(--tag-work); }
-  .drop[data-tag="work"] .editor-note__mark { color: var(--tag-work-accent); }
 
   @media (max-width: 720px) {
     .drop__related-grid { grid-template-columns: 1fr; }

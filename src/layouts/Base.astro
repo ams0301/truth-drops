@@ -1,5 +1,6 @@
 ---
 import { SITE } from '../config';
+import { getCollection } from 'astro:content';
 import '../styles/global.css';
 import BrokenVessel from '../components/BrokenVessel.astro';
 
@@ -24,6 +25,30 @@ const pageDesc = description ?? SITE.tagline;
 // Issue stamp data
 const issueDate = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
 const issueNum = `№ ${issueDate}`;
+
+// Standing epigraph — changes with each new issue, not each page load.
+// Seeded by the filing date of the most recent drop.
+const epigraphs = [
+  { la: 'Nullius in verba.', en: 'Take nobody’s word for it.', src: 'Motto of the Royal Society' },
+  { la: 'Veritas vos liberabit.', en: 'The truth will set you free.', src: 'John 8:32' },
+  { la: 'Felix qui potuit rerum cognoscere causas.', en: 'Happy is he who has learned the causes of things.', src: 'Virgil, Georgics II' },
+  { la: 'Amicus Plato, sed magis amica veritas.', en: 'Plato is a friend, but truth is a greater friend.', src: 'Attributed to Aristotle' },
+  { la: 'Dubitando ad veritatem venimus.', en: 'By doubting, we arrive at truth.', src: 'Attributed to Cicero' },
+  { la: 'Quis custodiet ipsos custodes?', en: 'Who watches the watchmen?', src: 'Juvenal, Satires' },
+  { la: 'Timeo hominem unius libri.', en: 'I fear the man of a single book.', src: 'Attributed to Aquinas' },
+];
+
+let epigraph = epigraphs[0];
+try {
+  const posts = await getCollection('articles', (p) => !p.data.draft);
+  if (posts.length > 0) {
+    const latest = posts.reduce((a, b) => (a.data.date > b.data.date ? a : b));
+    const daySeed = Math.floor(latest.data.date.valueOf() / 86400000);
+    epigraph = epigraphs[daySeed % epigraphs.length];
+  }
+} catch (_) {
+  // Content layer unavailable — keep the default epigraph
+}
 ---
 <!doctype html>
 <html lang="en">
@@ -44,6 +69,12 @@ const issueNum = `№ ${issueDate}`;
     <meta name="twitter:card" content="summary_large_image" />
 
     <meta name="theme-color" content="#0B0B0C" />
+
+    <!-- JS availability flag. Must run before first paint:
+         reveal animations are gated on the .js class, so if this
+         script or the module below ever fails, all content stays
+         visible (progressive enhancement, not progressive hiding). -->
+    <script is:inline>document.documentElement.classList.add('js');</script>
   </head>
   <body>
     <a href="#main" class="vh">Skip to content</a>
@@ -55,7 +86,7 @@ const issueNum = `№ ${issueDate}`;
       <span class="issue-stamp__diamond">◆</span>
     </div>
 
-    <!-- Vertical bookmark-ribbon reading progress (replaces horizontal bar) -->
+    <!-- Vertical bookmark-ribbon reading progress -->
     <div class="reading-ribbon" aria-hidden="true">
       <div class="reading-ribbon__fill"></div>
     </div>
@@ -63,7 +94,7 @@ const issueNum = `№ ${issueDate}`;
     <header class="site-header">
       <div class="shell site-header__inner">
         <a href="/" class="brand" aria-label={SITE.name}>
-          <!-- Small broken flower vase in header -->
+          <!-- Small broken vessel in header -->
           <span class="brand__vase" aria-hidden="true">
             <BrokenVessel size={36} static={true} />
           </span>
@@ -108,6 +139,15 @@ const issueNum = `№ ${issueDate}`;
           </ul>
         </div>
       </div>
+
+      <!-- Standing epigraph of the current issue -->
+      <div class="shell site-footer__epigraph-wrap">
+        <p class="site-footer__epigraph">
+          <span class="site-footer__epigraph-la">“{epigraph.la}”</span>
+          <span class="site-footer__epigraph-en">{epigraph.en} — {epigraph.src}</span>
+        </p>
+      </div>
+
       <div class="shell site-footer__bottom">
         <p>© {year} {SITE.author}. Set in Fraunces & Inter.</p>
         <p>{SITE.url.replace('https://', '')}</p>
@@ -300,9 +340,39 @@ const issueNum = `№ ${issueDate}`;
         padding-bottom: 1px;
       }
       .site-footer__list a:hover { color: var(--accent); border-color: var(--accent-soft); }
+
+      /* Standing epigraph — Latin, quiet, centered */
+      .site-footer__epigraph-wrap {
+        margin-top: 3.5rem;
+        padding-top: 2.25rem;
+        border-top: 1px solid var(--rule);
+      }
+      .site-footer__epigraph {
+        margin: 0;
+        text-align: center;
+      }
+      .site-footer__epigraph-la {
+        display: block;
+        font-family: var(--font-display);
+        font-style: italic;
+        font-size: 1.15rem;
+        line-height: 1.4;
+        color: var(--text-secondary);
+        margin-bottom: .45rem;
+        font-variation-settings: 'opsz' 72;
+      }
+      .site-footer__epigraph-en {
+        font-family: var(--font-mono);
+        font-size: .66rem;
+        letter-spacing: .1em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+      .site-footer__epigraph-en em { font-style: normal; }
+
       .site-footer__bottom {
         display: flex; justify-content: space-between; flex-wrap: wrap; gap: .5rem;
-        margin-top: 3rem; padding-top: 1.5rem; border-top: 1px solid var(--ink-3);
+        margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--ink-3);
         color: var(--text-muted); font-size: .78rem;
       }
       .site-footer__bottom p { margin: 0; }

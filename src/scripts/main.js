@@ -2,55 +2,46 @@
  * Truth Drops — vanilla interaction layer
  * Scroll reveals, reading ribbon, sticky header shrink, footnote popovers,
  * editor note unfiling, Broken Amphora scroll fracture.
- * No frameworks, ~5KB gzipped. Respects prefers-reduced-motion.
+ * No frameworks. Respects prefers-reduced-motion.
+ *
+ * NOTE: This file is loaded as an ES module. A single SyntaxError here
+ * disables every interaction on the site — keep it clean.
  */
 
 (function () {
   'use strict';
 
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Immediately reveal all content - runs before any other init
-  function forceRevealAll() {
-    document.querySelectorAll('.reveal').forEach(el => {
-      el.classList.add('is-in');
-      el.style.opacity = '1';
-      el.style.transform = 'none';
-    });
-    document.querySelectorAll('.editor-note').forEach(el => {
-      el.classList.add('is-visible');
-      el.style.opacity = '1';
-      el.style.transform = 'none';
-    });
-  }
-
-  // Run immediately to prevent flash of hidden content
-  forceRevealAll();
-
-  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // Safe wrapper for init functions
+  // Error boundary — one failing module must never take down the rest
   function safeInit(fn, name) {
     try {
       fn();
     } catch (e) {
-      console.warn(`[Truth Drops] ${name} failed:`, e);
+      console.warn('[Truth Drops] ' + name + ' failed:', e);
     }
   }
 
   // ============================================================
-  // 1. Scroll Reveal (IntersectionObserver) - only for scroll-triggered animations
+  // 1. Scroll Reveal (IntersectionObserver + viewport safety net)
   // ============================================================
   function initScrollReveal() {
-    if (prefersReduced) return;
+    function reveal(el) {
+      el.classList.add('is-in');
+      if (el.classList.contains('editor-note')) {
+        el.classList.add('is-visible');
+      }
+    }
 
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
+    if (prefersReduced || !('IntersectionObserver' in window)) {
+      document.querySelectorAll('.reveal, .editor-note').forEach(reveal);
+      return;
+    }
+
+    var observer = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
         if (entry.isIntersecting) {
-          entry.target.classList.add('is-in');
-          if (entry.target.classList.contains('editor-note')) {
-            entry.target.classList.add('is-visible');
-          }
+          reveal(entry.target);
           observer.unobserve(entry.target);
         }
       });
@@ -59,28 +50,40 @@
       threshold: 0.1
     });
 
-    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-    document.querySelectorAll('.editor-note').forEach(el => observer.observe(el));
+    document.querySelectorAll('.reveal, .editor-note').forEach(function (el) {
+      observer.observe(el);
+    });
+
+    // Safety net: if the observer ever misses an in-viewport element
+    // (timing edge case), reveal it. Below-the-fold elements are left
+    // for the observer so the scroll-in effect is preserved.
+    setTimeout(function () {
+      document.querySelectorAll('.reveal:not(.is-in), .editor-note:not(.is-visible)').forEach(function (el) {
+        var r = el.getBoundingClientRect();
+        if (r.top < window.innerHeight && r.bottom > 0) {
+          reveal(el);
+        }
+      });
+    }, 2000);
   }
 
   // ============================================================
   // 2. Vertical Reading Ribbon (article pages)
   // ============================================================
   function initReadingRibbon() {
-    const ribbon = document.querySelector('.reading-ribbon');
-    const fill = document.querySelector('.reading-ribbon__fill');
+    var ribbon = document.querySelector('.reading-ribbon');
+    var fill = document.querySelector('.reading-ribbon__fill');
     if (!ribbon || !fill) return;
 
-    const article = document.querySelector('.drop__body') || document.querySelector('main article');
+    var article = document.querySelector('.drop__body') || document.querySelector('main article');
     if (!article) return;
 
-    let ticking = false;
+    var ticking = false;
     function update() {
-      const rect = article.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const articleHeight = rect.height;
-      const scrolled = -rect.top + viewportHeight;
-      const progress = Math.max(0, Math.min(1, scrolled / (articleHeight + viewportHeight)));
+      var rect = article.getBoundingClientRect();
+      var viewportHeight = window.innerHeight;
+      var scrolled = -rect.top + viewportHeight;
+      var progress = Math.max(0, Math.min(1, scrolled / (rect.height + viewportHeight)));
       fill.style.height = (progress * 100) + '%';
       ticking = false;
     }
@@ -101,16 +104,14 @@
   // 3. Sticky Header Shrink
   // ============================================================
   function initHeaderShrink() {
-    const header = document.querySelector('.site-header');
+    var header = document.querySelector('.site-header');
     if (!header) return;
 
-    const shrinkThreshold = 120;
-    let ticking = false;
+    var shrinkThreshold = 120;
+    var ticking = false;
 
     function update() {
-      const scrollY = window.scrollY;
-      const shouldShrink = scrollY > shrinkThreshold;
-      header.classList.toggle('is-shrunk', shouldShrink);
+      header.classList.toggle('is-shrunk', window.scrollY > shrinkThreshold);
       ticking = false;
     }
 
@@ -129,11 +130,11 @@
   // 4. Footnote Popovers
   // ============================================================
   function initFootnotes() {
-    const refs = document.querySelectorAll('.footnote-ref');
+    var refs = document.querySelectorAll('.footnote-ref');
     if (!refs.length) return;
 
-    let currentPopover = null;
-    let currentRef = null;
+    var currentPopover = null;
+    var currentRef = null;
 
     function closeAll() {
       if (currentPopover) {
@@ -144,19 +145,16 @@
     }
 
     function positionPopover(ref, popover) {
-      const refRect = ref.getBoundingClientRect();
-      const popoverRect = popover.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-      const gap = 8;
+      var refRect = ref.getBoundingClientRect();
+      var popoverRect = popover.getBoundingClientRect();
+      var viewportWidth = window.innerWidth;
+      var viewportHeight = window.innerHeight;
+      var gap = 8;
 
-      let top = refRect.top - popoverRect.height - gap;
-      let left = refRect.left + (refRect.width / 2) - (popoverRect.width / 2);
+      var top = refRect.top - popoverRect.height - gap;
+      var left = refRect.left + (refRect.width / 2) - (popoverRect.width / 2);
 
-      if (top < gap) {
-        top = refRect.bottom + gap;
-      }
-
+      if (top < gap) top = refRect.bottom + gap;
       if (left < gap) left = gap;
       if (left + popoverRect.width > viewportWidth - gap) {
         left = viewportWidth - popoverRect.width - gap;
@@ -166,10 +164,10 @@
       popover.style.left = left + 'px';
     }
 
-    refs.forEach(ref => {
-      const id = ref.getAttribute('href')?.slice(1);
-      if (!id) return;
-      const popover = document.getElementById(id);
+    refs.forEach(function (ref) {
+      var id = ref.getAttribute('href');
+      if (!id || id.charAt(0) !== '#') return;
+      var popover = document.getElementById(id.slice(1));
       if (!popover || !popover.classList.contains('footnote-popover')) return;
 
       document.body.appendChild(popover);
@@ -186,23 +184,20 @@
         if (currentPopover === popover) closeAll();
       }
 
-      ref.addEventListener('click', (e) => {
+      ref.addEventListener('click', function (e) {
         e.preventDefault();
-        if (popover.classList.contains('open')) {
-          close();
-        } else {
-          open();
-        }
+        if (popover.classList.contains('open')) close(); else open();
       });
 
-      ref.addEventListener('keydown', (e) => {
+      ref.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') close();
       });
 
-      popover.querySelector('.footnote-popover__close')?.addEventListener('click', close);
+      var closeBtn = popover.querySelector('.footnote-popover__close');
+      if (closeBtn) closeBtn.addEventListener('click', close);
     });
 
-    document.addEventListener('click', (e) => {
+    document.addEventListener('click', function (e) {
       if (currentPopover && !currentPopover.contains(e.target) && e.target !== currentRef) {
         closeAll();
       }
@@ -216,119 +211,113 @@
   // 5. Smooth scroll offset for anchor links
   // ============================================================
   function initAnchorOffset() {
-    const header = document.querySelector('.site-header');
+    var header = document.querySelector('.site-header');
     if (!header) return;
 
-    document.addEventListener('click', (e) => {
-      const anchor = e.target.closest('a[href^="#"]');
+    document.addEventListener('click', function (e) {
+      var anchor = e.target.closest('a[href^="#"]');
       if (!anchor) return;
 
-      const targetId = anchor.getAttribute('href').slice(1);
+      var targetId = anchor.getAttribute('href').slice(1);
       if (!targetId) return;
 
-      const target = document.getElementById(targetId);
+      var target = document.getElementById(targetId);
       if (!target) return;
 
       e.preventDefault();
-      const headerHeight = header.offsetHeight;
-      const targetTop = target.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top: targetTop - headerHeight - 16, behavior: 'smooth' });
+      var targetTop = target.getBoundingClientRect().top + window.scrollY;
+      window.scrollTo({ top: targetTop - header.offsetHeight - 16, behavior: 'smooth' });
       target.focus({ preventScroll: true });
     });
   }
 
   // ============================================================
-  // 6. Broken Amphora — Scroll-driven fracture (article pages)
+  // 6. Broken Amphora — scroll-driven fracture (article pages)
+  //    Crack draws down (0–60%), fragments separate (60–85%),
+  //    golden flash at sign-off (95%+).
   // ============================================================
   function initBrokenAmphora() {
-    if (prefersReduced) {
-      document.querySelectorAll('.broken-vessel:not(.is-static)').forEach(vessel => {
-        vessel.querySelectorAll('.crack-path').forEach(crack => {
-          crack.style.strokeDashoffset = '0';
-          crack.classList.add('active');
-        });
-        vessel.querySelectorAll('.vessel-piece').forEach(p => p.classList.add('separated'));
+    var vessels = document.querySelectorAll('.broken-vessel:not(.is-static)');
+    if (!vessels.length) return;
+
+    function applyFinalState(vessel) {
+      vessel.querySelectorAll('.crack-path').forEach(function (crack) {
+        crack.style.strokeDashoffset = '0';
+        crack.classList.add('active');
       });
+      vessel.querySelectorAll('.vessel-piece').forEach(function (p) {
+        p.classList.add('separated');
+      });
+    }
+
+    if (prefersReduced) {
+      vessels.forEach(applyFinalState);
       return;
     }
 
-    const vessels = document.querySelectorAll('.broken-vessel:not(.is-static)');
-    if (!vessels.length) return;
-
-    let ticking = false;
-    let flashDone = false;
+    var ticking = false;
+    var flashDone = false;
 
     function update() {
-      const article = document.querySelector('.drop__body') || document.querySelector('main article');
+      var article = document.querySelector('.drop__body') || document.querySelector('main article');
+
+      // No article context (e.g. non-article pages): just show the crack
       if (!article) {
-        vessels.forEach(vessel => {
-          const crack = vessel.querySelector('.crack-path');
+        vessels.forEach(function (vessel) {
+          var crack = vessel.querySelector('.crack-path');
           if (crack) {
             crack.style.strokeDashoffset = '0';
             crack.classList.add('active');
           }
         });
+        ticking = false;
         return;
       }
 
-      const rect = article.getBoundingClientRect();
-      const viewportHeight = window.innerHeight;
-      const articleHeight = rect.height;
-      const scrolled = -rect.top + viewportHeight;
-      const progress = Math.max(0, Math.min(1, scrolled / (articleHeight + viewportHeight)));
+      var rect = article.getBoundingClientRect();
+      var viewportHeight = window.innerHeight;
+      var scrolled = -rect.top + viewportHeight;
+      var progress = Math.max(0, Math.min(1, scrolled / (rect.height + viewportHeight)));
 
-      vessels.forEach(vessel => {
-        const crack = vessel.querySelector('.crack-path');
-        const leftPiece = vessel.querySelector('.fragment-left');
-        const rightPiece = vessel.querySelector('.fragment-right');
+      vessels.forEach(function (vessel) {
+        var crack = vessel.querySelector('.crack-path');
+        var leftPiece = vessel.querySelector('.fragment-left');
+        var rightPiece = vessel.querySelector('.fragment-right');
 
+        // Crack draws from 0% to 60% of scroll
         if (crack) {
-          const crackProgress = Math.min(1, progress / 0.6);
-          if (crackProgress > 0) {
-            const totalLength = 180;
-            crack.style.strokeDashoffset = (totalLength * (1 - crackProgress)).toString();
-            if (crackProgress >= 1) {
-              crack.style.strokeDashoffset = '0';
-              crack.classList.add('active');
-            } else {
-              crack.classList.remove('active');
-            }
+          var crackProgress = Math.min(1, progress / 0.6);
+          var totalLength = 180; // matches stroke-dasharray in the component CSS
+          crack.style.strokeDashoffset = (totalLength * (1 - crackProgress)).toString();
+          if (crackProgress >= 1) crack.classList.add('active');
+          else crack.classList.remove('active');
+        }
+
+        // Fragments separate from 60% to 85%
+        var sep = Math.max(0, Math.min(1, (progress - 0.6) / 0.25));
+        if (leftPiece && rightPiece && sep > 0) {
+          var tx = parseFloat(leftPiece.dataset.tx) || -12;
+          var ty = parseFloat(leftPiece.dataset.ty) || 4;
+          var rot = parseFloat(leftPiece.dataset.rot) || -3;
+
+          leftPiece.style.transform =
+            'translateX(' + (tx * sep) + 'px) translateY(' + (ty * sep) + 'px) rotate(' + (rot * sep) + 'deg)';
+          rightPiece.style.transform =
+            'translateX(' + (-tx * sep) + 'px) translateY(' + (ty * sep) + 'px) rotate(' + (-rot * sep) + 'deg)';
+
+          if (sep >= 1) {
+            leftPiece.classList.add('separated');
+            rightPiece.classList.add('separated');
           }
         }
 
-        const separationProgress = Math.max(0, Math.min(1, (progress - 0.6) / 0.25));
-        if (separationProgress > 0) {
-          const leftPiece = vessel.querySelector('.fragment-left');
-          const rightPiece = vessel.querySelector('.fragment-right');
-          
-          if (leftPiece && rightPiece) {
-            const tx = parseFloat(leftPiece.dataset.tx) || -12;
-            const ty = parseFloat(leftPiece.dataset.ty) || 4;
-            const rot = leftPiece.dataset.rot || '-3deg';
-            
-            leftPiece.style.transform = `
-              translateX(${tx * separationProgress}px)
-              translateY(${ty * separationProgress}px)
-              rotate(${parseFloat(rot) * separationProgress}deg)
-            `;
-            rightPiece.style.transform = `
-              translateX(${-parseFloat(leftPiece.dataset.tx) * separationProgress}px)
-              translateY(${ty * separationProgress}px)
-              rotate(${-parseFloat(rot) * separationProgress}deg)
-            `;
-            
-            if (separationProgress >= 1) {
-              leftPiece.classList.add('separated');
-              rightPiece.classList.add('separated');
-            }
-          }
-        }
-
-        const crack = vessel.querySelector('.crack-path');
-        if (crack && progress >= 0.95) {
+        // Single golden flash at sign-off
+        if (!flashDone && progress >= 0.95 && crack) {
+          flashDone = true;
           crack.classList.add('final-flash');
-          setTimeout(() => crack.classList.remove('final-flash'), 600);
+          setTimeout(function () { crack.classList.remove('final-flash'); }, 1200);
         }
+        if (progress < 0.9) flashDone = false;
       });
 
       ticking = false;
@@ -347,98 +336,62 @@
   }
 
   // ============================================================
-  // 7. Smooth scroll offset for anchor links
-  // ============================================================
-  function initAnchorOffset() {
-    const header = document.querySelector('.site-header');
-    if (!header) return;
-
-    document.addEventListener('click', (e) => {
-      const anchor = e.target.closest('a[href^="#"]');
-      if (!anchor) return;
-
-      const targetId = anchor.getAttribute('href').slice(1);
-      if (!targetId) return;
-
-      const target = document.getElementById(targetId);
-      if (!target) return;
-
-      e.preventDefault();
-      const headerHeight = header.offsetHeight;
-      const targetTop = target.getBoundingClientRect().top + window.scrollY;
-      window.scrollTo({ top: targetTop - headerHeight - 16, behavior: 'smooth' });
-      target.focus({ preventScroll: true });
-    });
-  }
-
-  // ============================================================
-  // 8. Homepage Vase Easter Egg — click to fully crack
+  // 7. Homepage Vase Easter Egg — click to fully fracture
   // ============================================================
   function initVaseEasterEgg() {
     if (prefersReduced) return;
 
-    const homeVase = document.querySelector('.feature__vessel .broken-vessel.is-static');
+    var homeVase = document.querySelector('.feature__vessel .broken-vessel.is-static');
     if (!homeVase) return;
 
-    let cracked = false;
+    var cracked = false;
 
-    homeVase.addEventListener('click', () => {
+    homeVase.addEventListener('click', function () {
       if (cracked) return;
       cracked = true;
 
-      const crack = homeVase.querySelector('.crack-path');
+      var crack = homeVase.querySelector('.crack-path');
       if (crack) {
         crack.style.strokeDashoffset = '0';
         crack.classList.add('active');
       }
 
-      setTimeout(() => {
-        const leftPiece = homeVase.querySelector('.fragment-left');
-        const rightPiece = homeVase.querySelector('.fragment-right');
+      setTimeout(function () {
+        var leftPiece = homeVase.querySelector('.fragment-left');
+        var rightPiece = homeVase.querySelector('.fragment-right');
         if (leftPiece && rightPiece) {
           leftPiece.classList.add('separated');
           rightPiece.classList.add('separated');
         }
       }, 800);
 
-      setTimeout(() => {
-        const crack = homeVase.querySelector('.crack-path');
-        if (crack) {
-          crack.classList.add('final-flash');
-          setTimeout(() => crack.classList.remove('final-flash'), 1200);
-        }
+      setTimeout(function () {
+        if (!crack) return;
+        crack.classList.add('final-flash');
+        setTimeout(function () { crack.classList.remove('final-flash'); }, 1200);
       }, 1600);
     });
   }
 
   // ============================================================
-  // 9. Custom cursor for article body (text caret feel)
+  // 8. Custom cursor for article body (text caret feel)
   // ============================================================
   function initCustomCursor() {
     if (!matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     if (prefersReduced) return;
 
-    const style = document.createElement('style');
-    style.textContent = `
-      .prose, .drop__body { cursor: text !important; }
-      .prose *:not(a):not(button):not(input):not([role="button"]), 
-      .drop__body *:not(a):not(button):not(input):not([role="button"]) { cursor: text !important; }
-      .prose a, .drop__body a, .prose button, .drop__body button { cursor: pointer !important; }
-    `;
+    var style = document.createElement('style');
+    style.textContent =
+      '.prose, .drop__body { cursor: text !important; }' +
+      '.prose *:not(a):not(button):not(input):not([role="button"]),' +
+      '.drop__body *:not(a):not(button):not(input):not([role="button"]) { cursor: text !important; }' +
+      '.prose a, .drop__body a, .prose button, .drop__body button { cursor: pointer !important; }';
     document.head.appendChild(style);
   }
 
   // ============================================================
-  // Init all with error boundaries
+  // Init
   // ============================================================
-  function safeInit(fn, name) {
-    try {
-      fn();
-    } catch (e) {
-      console.warn(`[Truth Drops] ${name} failed:`, e);
-    }
-  }
-
   function init() {
     safeInit(initScrollReveal, 'initScrollReveal');
     safeInit(initReadingRibbon, 'initReadingRibbon');
